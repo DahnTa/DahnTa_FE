@@ -9,8 +9,8 @@ import {
   Minus,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -47,37 +47,37 @@ const StockDetail = ({
 
   const theme = isDarkMode
     ? {
-        cardBg: "bg-slate-900",
-        cardBorder: "border-slate-800",
-        textMain: "text-slate-100",
-        textSub: "text-slate-400",
-        inputBg: "bg-slate-950",
-        inputBorder: "border-slate-700",
-        chartGrid: "#1e293b",
-        chartText: "#94a3b8",
-        tooltipBg: "#0f172a",
-        tooltipBorder: "#1e293b",
-        tooltipText: "#f1f5f9",
-        subCard: "bg-slate-800/50",
-        btnBg: "bg-slate-800 hover:bg-slate-700",
-        btnText: "text-slate-200",
-      }
+      cardBg: "bg-slate-900",
+      cardBorder: "border-slate-800",
+      textMain: "text-slate-100",
+      textSub: "text-slate-400",
+      inputBg: "bg-slate-950",
+      inputBorder: "border-slate-700",
+      chartGrid: "#1e293b",
+      chartText: "#94a3b8",
+      tooltipBg: "#0f172a",
+      tooltipBorder: "#1e293b",
+      tooltipText: "#f1f5f9",
+      subCard: "bg-slate-800/50",
+      btnBg: "bg-slate-800 hover:bg-slate-700",
+      btnText: "text-slate-200",
+    }
     : {
-        cardBg: "bg-white",
-        cardBorder: "border-slate-300",
-        textMain: "text-slate-900",
-        textSub: "text-slate-500",
-        inputBg: "bg-slate-50",
-        inputBorder: "border-slate-300",
-        chartGrid: "#cbd5e1",
-        chartText: "#64748b",
-        tooltipBg: "#ffffff",
-        tooltipBorder: "#cbd5e1",
-        tooltipText: "#0f172a",
-        subCard: "bg-slate-50",
-        btnBg: "bg-slate-100 hover:bg-slate-200",
-        btnText: "text-slate-800",
-      };
+      cardBg: "bg-white",
+      cardBorder: "border-slate-300",
+      textMain: "text-slate-900",
+      textSub: "text-slate-500",
+      inputBg: "bg-slate-50",
+      inputBorder: "border-slate-300",
+      chartGrid: "#cbd5e1",
+      chartText: "#64748b",
+      tooltipBg: "#ffffff",
+      tooltipBorder: "#cbd5e1",
+      tooltipText: "#0f172a",
+      subCard: "bg-slate-50",
+      btnBg: "bg-slate-100 hover:bg-slate-200",
+      btnText: "text-slate-800",
+    };
 
   const chartData = stock.prices
     .slice(gameState.startDayIndex, currentIdx + 1)
@@ -144,11 +144,10 @@ const StockDetail = ({
         </button>
         <button
           onClick={() => toggleWatchlist(stockId)}
-          className={`p-2 rounded-full transition-all ${
-            isWatching
-              ? "text-pink-500 bg-pink-500/10 hover:bg-pink-500/20"
-              : `${theme.textSub} ${theme.subCard} hover:text-pink-400 hover:bg-opacity-80`
-          }`}
+          className={`p-2 rounded-full transition-all ${isWatching
+            ? "text-pink-500 bg-pink-500/10 hover:bg-pink-500/20"
+            : `${theme.textSub} ${theme.subCard} hover:text-pink-400 hover:bg-opacity-80`
+            }`}
         >
           <Heart size={24} fill={isWatching ? "currentColor" : "none"} />
         </button>
@@ -173,17 +172,15 @@ const StockDetail = ({
                   </span>
                 </h2>
                 <div
-                  className={`flex items-center gap-2 text-xl md:text-2xl font-mono font-bold mt-2 ${
-                    changeRate >= 0 ? "text-red-500" : "text-blue-500"
-                  }`}
+                  className={`flex items-center gap-2 text-xl md:text-2xl font-mono font-bold mt-2 ${changeRate >= 0 ? "text-red-500" : "text-blue-500"
+                    }`}
                 >
                   {formatKRW(currentPrice)}
                   <span
-                    className={`text-sm font-bold px-2 py-1 rounded ${
-                      changeRate >= 0
-                        ? "bg-red-500/10 text-red-500"
-                        : "bg-blue-500/10 text-blue-500"
-                    }`}
+                    className={`text-sm font-bold px-2 py-1 rounded ${changeRate >= 0
+                      ? "bg-red-500/10 text-red-500"
+                      : "bg-blue-500/10 text-blue-500"
+                      }`}
                   >
                     {changeRate >= 0 ? "+" : ""}
                     {changeRate.toFixed(2)}%
@@ -192,9 +189,24 @@ const StockDetail = ({
               </div>
             </div>
 
-            <div className="flex-1 w-full min-h-[300px] md:min-h-[350px]">
+            {/* Fixed height container for Recharts to fallback correctly */}
+            <div className="w-full h-[300px] md:h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke={theme.chartGrid}
@@ -229,16 +241,16 @@ const StockDetail = ({
                       marginBottom: "0.5rem",
                     }}
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="price"
                     stroke={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
                     strokeWidth={3}
+                    fill="url(#chartGradient)"
                     dot={chartData.length === 1 ? { r: 4 } : false}
-                    activeDot={{ r: 6, strokeWidth: 0 }}
                     animationDuration={500}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -265,21 +277,17 @@ const StockDetail = ({
               <div className={`flex gap-1 ${theme.subCard} p-1 rounded-lg`}>
                 <button
                   onClick={() => cyclePersona("prev")}
-                  className={`p-1.5 hover:${
-                    isDarkMode ? "bg-slate-700" : "bg-slate-200"
-                  } rounded ${theme.textSub} hover:${
-                    theme.textMain
-                  } transition-colors`}
+                  className={`p-1.5 hover:${isDarkMode ? "bg-slate-700" : "bg-slate-200"
+                    } rounded ${theme.textSub} hover:${theme.textMain
+                    } transition-colors`}
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button
                   onClick={() => cyclePersona("next")}
-                  className={`p-1.5 hover:${
-                    isDarkMode ? "bg-slate-700" : "bg-slate-200"
-                  } rounded ${theme.textSub} hover:${
-                    theme.textMain
-                  } transition-colors`}
+                  className={`p-1.5 hover:${isDarkMode ? "bg-slate-700" : "bg-slate-200"
+                    } rounded ${theme.textSub} hover:${theme.textMain
+                    } transition-colors`}
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -311,9 +319,8 @@ const StockDetail = ({
                     <Sparkles size={16} /> 심층 분석 리포트
                   </h4>
                   <div
-                    className={`text-sm ${
-                      isDarkMode ? "text-slate-300" : "text-slate-700"
-                    } whitespace-pre-wrap leading-relaxed space-y-2`}
+                    className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"
+                      } whitespace-pre-wrap leading-relaxed space-y-2`}
                   >
                     {aiAnalysis}
                   </div>
@@ -341,21 +348,19 @@ const StockDetail = ({
             <div className={`flex ${theme.subCard} p-1 rounded-xl mb-6`}>
               <button
                 onClick={() => setOrderType("BUY")}
-                className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
-                  orderType === "BUY"
-                    ? "bg-red-500 text-white shadow-lg"
-                    : `${theme.textSub} hover:${theme.textMain}`
-                }`}
+                className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${orderType === "BUY"
+                  ? "bg-red-500 text-white shadow-lg"
+                  : `${theme.textSub} hover:${theme.textMain}`
+                  }`}
               >
                 매수 (Buy)
               </button>
               <button
                 onClick={() => setOrderType("SELL")}
-                className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
-                  orderType === "SELL"
-                    ? "bg-blue-500 text-white shadow-lg"
-                    : `${theme.textSub} hover:${theme.textMain}`
-                }`}
+                className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${orderType === "SELL"
+                  ? "bg-blue-500 text-white shadow-lg"
+                  : `${theme.textSub} hover:${theme.textMain}`
+                  }`}
               >
                 매도 (Sell)
               </button>
@@ -365,9 +370,8 @@ const StockDetail = ({
               <div className="flex justify-between text-sm">
                 <span className={theme.textSub}>보유 수량</span>
                 <span
-                  className={`font-mono font-bold ${
-                    isDarkMode ? "text-slate-200" : "text-slate-800"
-                  }`}
+                  className={`font-mono font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"
+                    }`}
                 >
                   {myQty} 주
                 </span>
@@ -376,9 +380,8 @@ const StockDetail = ({
                 <div className="flex justify-between text-sm">
                   <span className={theme.textSub}>평균 단가</span>
                   <span
-                    className={`font-mono font-bold ${
-                      isDarkMode ? "text-slate-200" : "text-slate-800"
-                    }`}
+                    className={`font-mono font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"
+                      }`}
                   >
                     {formatCurrency(myAvg)}
                   </span>
@@ -387,9 +390,8 @@ const StockDetail = ({
               <div className="flex justify-between text-sm">
                 <span className={theme.textSub}>주문 가능 금액</span>
                 <span
-                  className={`font-mono font-bold ${
-                    isDarkMode ? "text-slate-200" : "text-slate-800"
-                  }`}
+                  className={`font-mono font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"
+                    }`}
                 >
                   {formatCurrency(gameState.balance)}
                 </span>
@@ -438,9 +440,8 @@ const StockDetail = ({
                   총 주문 금액
                 </span>
                 <span
-                  className={`text-xl font-black font-mono ${
-                    orderType === "BUY" ? "text-red-500" : "text-blue-500"
-                  }`}
+                  className={`text-xl font-black font-mono ${orderType === "BUY" ? "text-red-500" : "text-blue-500"
+                    }`}
                 >
                   {formatCurrency(totalOrderPrice)}
                 </span>
@@ -452,15 +453,14 @@ const StockDetail = ({
                   (orderType === "BUY" && !canBuy) ||
                   (orderType === "SELL" && !canSell)
                 }
-                className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${
-                  orderType === "BUY"
-                    ? canBuy
-                      ? "bg-red-600 hover:bg-red-500 text-white shadow-red-900/20"
-                      : "bg-slate-700 text-slate-500 cursor-not-allowed"
-                    : canSell
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${orderType === "BUY"
+                  ? canBuy
+                    ? "bg-red-600 hover:bg-red-500 text-white shadow-red-900/20"
+                    : "bg-slate-700 text-slate-500 cursor-not-allowed"
+                  : canSell
                     ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20"
                     : "bg-slate-700 text-slate-500 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 {orderType === "BUY" ? "매수하기" : "매도하기"}
               </button>
