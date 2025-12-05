@@ -16,6 +16,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { formatKRW, formatNumber, formatCurrency } from "../utils/formatters";
 import { MARKET_DATA } from "../utils/marketData";
@@ -79,12 +80,22 @@ const StockDetail = ({
       btnText: "text-slate-800",
     };
 
+  // Show 10 days history + current progress
+  const historyDays = 10;
+  const startDataIndex = Math.max(0, gameState.startDayIndex - historyDays);
+  const endDataIndex = currentIdx + 1;
+
   const chartData = stock.prices
-    .slice(gameState.startDayIndex, currentIdx + 1)
-    .map((price, idx) => ({
-      day: idx + 1,
-      price: price,
-    }));
+    .slice(startDataIndex, endDataIndex)
+    .map((price, idx) => {
+      const realIdx = startDataIndex + idx;
+      const dayNum = realIdx - gameState.startDayIndex + 1;
+      return {
+        day: dayNum > 0 ? `Day ${dayNum}` : `D${dayNum}`, // D0, D-1... for history
+        price: price,
+        isHistory: dayNum <= 0,
+      };
+    });
 
   const myStock = gameState.portfolio[stockId];
   const myQty = myStock ? myStock.quantity : 0;
@@ -212,12 +223,15 @@ const StockDetail = ({
                     stroke={theme.chartGrid}
                     vertical={false}
                   />
+                  <ReferenceLine x="Day 1" stroke={theme.chartText} strokeDasharray="3 3" label={{ value: "START", fill: theme.chartText, fontSize: 10, position: 'insideTopRight' }} />
                   <XAxis
                     dataKey="day"
                     stroke={theme.chartText}
-                    tick={{ fill: theme.chartText, fontSize: 12 }}
+                    tick={{ fill: theme.chartText, fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={20}
                   />
                   <YAxis
                     domain={["auto", "auto"]}
