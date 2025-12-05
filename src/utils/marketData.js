@@ -11,16 +11,16 @@ class SeededRandom {
 
 // --- Stock Information ---
 export const STOCK_INFO = [
-  { name: "엔비디아", ticker: "NVDA", basePrice: 65000 },
-  { name: "애플", ticker: "AAPL", basePrice: 90000 },
-  { name: "마이크로소프트", ticker: "MSFT", basePrice: 200000 },
-  { name: "알파벳(구글)", ticker: "GOOGL", basePrice: 85000 },
-  { name: "아마존", ticker: "AMZN", basePrice: 90000 },
-  { name: "메타 플랫폼스", ticker: "META", basePrice: 235000 },
-  { name: "브로드컴", ticker: "AVGO", basePrice: 80000 },
-  { name: "테슬라", ticker: "TSLA", basePrice: 110000 },
-  { name: "버크셔 해서웨이", ticker: "BRK.B", basePrice: 300000 },
-  { name: "월마트", ticker: "WMT", basePrice: 30000 },
+  { name: "엔비디아", ticker: "NVDA", basePrice: 184 },
+  { name: "애플", ticker: "AAPL", basePrice: 280 },
+  { name: "마이크로소프트", ticker: "MSFT", basePrice: 290 },
+  { name: "알파벳(구글)", ticker: "GOOGL", basePrice: 260 },
+  { name: "아마존", ticker: "AMZN", basePrice: 125 },
+  { name: "메타 플랫폼스", ticker: "META", basePrice: 2399 },
+  { name: "브로드컴", ticker: "AVGO", basePrice: 500 },
+  { name: "테슬라", ticker: "TSLA", basePrice: 550 },
+  { name: "버크셔 해서웨이", ticker: "BRK.B", basePrice: 301 },
+  { name: "월마트", ticker: "WMT", basePrice: 3800 },
 ];
 
 // --- Generate Market Data ---
