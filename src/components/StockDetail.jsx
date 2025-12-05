@@ -438,7 +438,7 @@ const StockDetail = ({
                     className={`font-mono font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"
                       }`}
                   >
-                    {formatNumber(myAvg)} 원
+                    {formatNumber(myAvg)} 달러
                   </span>
                 </div>
               )}
@@ -498,7 +498,7 @@ const StockDetail = ({
                   className={`text-xl font-black font-mono ${orderType === "BUY" ? "text-red-500" : "text-blue-500"
                     }`}
                 >
-                  {formatNumber(totalOrderPrice)} 원
+                  {formatNumber(totalOrderPrice)} 달러
                 </span>
               </div>
 
