@@ -20,7 +20,7 @@ import {
 import { formatKRW, formatNumber, formatCurrency } from "../utils/formatters";
 import { MARKET_DATA } from "../utils/marketData";
 import { AI_PERSONAS } from "../utils/aiPersonas";
-import { generateAIAnalysis } from "../utils/aiTemplates";
+import { getStoredAIAnalysis } from "../utils/aiTemplates";
 
 const StockDetail = ({
   stockId,
@@ -31,7 +31,7 @@ const StockDetail = ({
   toggleWatchlist,
 }) => {
   const [amount, setAmount] = useState(1);
-  const [persona, setPersona] = useState("trend");
+  const [persona, setPersona] = useState("integrated");
   const [orderType, setOrderType] = useState("BUY");
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -117,19 +117,9 @@ const StockDetail = ({
     setIsAnalyzing(true);
     setAiAnalysis(null);
 
-    const recentPrices = stock.prices.slice(
-      Math.max(0, currentIdx - 10),
-      currentIdx + 1
-    );
-
-    // Simulate API delay
+    // 사전 저장된 백엔드 분석을 가져오는 동작을 모사
     setTimeout(() => {
-      const analysis = generateAIAnalysis(
-        persona,
-        stock.name,
-        changeRate,
-        recentPrices
-      );
+      const analysis = getStoredAIAnalysis(persona, stock.id, stock.name);
       setAiAnalysis(analysis);
       setIsAnalyzing(false);
     }, 800);
