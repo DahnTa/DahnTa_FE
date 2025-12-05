@@ -3,7 +3,7 @@ import { X, AlertTriangle, RefreshCw, FileText, KeyRound } from "lucide-react";
 import { formatCurrency } from "../utils/formatters";
 import { MARKET_DATA } from "../utils/marketData";
 
-export const SettingsModal = ({ isOpen, onClose, onEditId, onEditPw, isDarkMode }) => {
+export const SettingsModal = ({ isOpen, onClose, onEditPw, isDarkMode }) => {
   if (!isOpen) return null;
 
   const theme = isDarkMode
@@ -44,13 +44,6 @@ export const SettingsModal = ({ isOpen, onClose, onEditId, onEditPw, isDarkMode 
         </p>
 
         <div className="space-y-3">
-          <button
-            onClick={onEditId}
-            className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all ${theme.btnBg} ${theme.btnText}`}
-          >
-            <FileText size={20} />
-            아이디 변경
-          </button>
           <button
             onClick={onEditPw}
             className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all ${theme.btnBg} ${theme.btnText}`}
@@ -185,4 +178,3 @@ export const GameOverModal = ({ gameState, onReset }) => {
     </div>
   );
 };
-

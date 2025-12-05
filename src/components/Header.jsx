@@ -76,16 +76,10 @@ const Header = ({
         dropdownHover: "hover:bg-slate-50",
       };
 
-  const handleEditId = () => {
-    setIsSettingsOpen(false);
-    const newId = prompt("새로운 아이디를 입력하세요:");
-    if (newId) alert(`아이디가 '${newId}'(으)로 변경되었습니다. (데모)`);
-  };
-
   const handleEditPassword = () => {
     setIsSettingsOpen(false);
     const newPw = prompt("새로운 비밀번호를 입력하세요:");
-    if (newPw) alert("비밀번호가 변경되었습니다. (데모)");
+    if (newPw) alert("비밀번호가 변경되었습니다.");
   };
 
   return (
@@ -266,7 +260,6 @@ const Header = ({
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onEditId={handleEditId}
         onEditPw={handleEditPassword}
         isDarkMode={isDarkMode}
       />
@@ -275,4 +268,3 @@ const Header = ({
 };
 
 export default Header;
-
