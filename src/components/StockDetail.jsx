@@ -9,8 +9,9 @@ import {
   Minus,
 } from "lucide-react";
 import {
-  AreaChart,
-  Area,
+  ComposedChart,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -80,8 +81,8 @@ const StockDetail = ({
       btnText: "text-slate-800",
     };
 
-  // Show 10 days history + current progress
-  const historyDays = 10;
+  // OHLC Data Generation for Candlestick Chart
+  const historyDays = 20;
   const startDataIndex = Math.max(0, gameState.startDayIndex - historyDays);
   const endDataIndex = currentIdx + 1;
 
@@ -89,11 +90,34 @@ const StockDetail = ({
     .slice(startDataIndex, endDataIndex)
     .map((price, idx) => {
       const realIdx = startDataIndex + idx;
+      // Determine Open Price
+      const prevClose = realIdx > 0 ? stock.prices[realIdx - 1] : price;
+      const open = prevClose;
+      const close = price;
+
+      // Simulate High/Low (Deterministic pseudo-random)
+      const volatility = price * 0.02; // 2% volatility
+      const rand = Math.abs(Math.sin(realIdx * 12345));
+
+      const bodyMax = Math.max(open, close);
+      const bodyMin = Math.min(open, close);
+
+      const high = bodyMax + (rand * volatility);
+      const low = bodyMin - ((1 - rand) * volatility);
+
       const dayNum = realIdx - gameState.startDayIndex + 1;
+      const isUp = close >= open;
+
       return {
-        day: dayNum > 0 ? `Day ${dayNum}` : `D${dayNum}`, // D0, D-1... for history
-        price: price,
-        isHistory: dayNum <= 0,
+        day: dayNum > 0 ? `Day ${dayNum}` : `D${dayNum}`,
+        open,
+        close,
+        high,
+        low,
+        pass: isUp,
+        wickRange: [low, high],
+        bodyRange: [bodyMin, bodyMax === bodyMin ? bodyMax + (price * 0.0005) : bodyMax],
+        color: isUp ? "#ef4444" : "#3b82f6",
       };
     });
 
@@ -127,8 +151,6 @@ const StockDetail = ({
   const handleDeepAnalysis = () => {
     setIsAnalyzing(true);
     setAiAnalysis(null);
-
-    // 사전 저장된 백엔드 분석을 가져오는 동작을 모사
     setTimeout(() => {
       const analysis = getStoredAIAnalysis(persona, stock.id, stock.name);
       setAiAnalysis(analysis);
@@ -136,8 +158,7 @@ const StockDetail = ({
     }, 800);
   };
 
-  const incrementAmount = () =>
-    setAmount((prev) => Math.min(prev + 1, maxAmount));
+  const incrementAmount = () => setAmount((prev) => Math.min(prev + 1, maxAmount));
   const decrementAmount = () => setAmount((prev) => Math.max(1, prev - 1));
 
   return (
@@ -165,7 +186,6 @@ const StockDetail = ({
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-        {/* Chart Section - Main Column */}
         <div className="flex-1 space-y-6">
           <div
             className={`${theme.cardBg} p-4 md:p-6 rounded-2xl border ${theme.cardBorder} shadow-sm min-h-[400px] md:min-h-[500px] flex flex-col`}
@@ -200,30 +220,16 @@ const StockDetail = ({
               </div>
             </div>
 
-            {/* Fixed height container for Recharts to fallback correctly */}
             <div className="w-full h-[300px] md:h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
-                        stopOpacity={0.3}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
+                <ComposedChart data={chartData}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke={theme.chartGrid}
                     vertical={false}
                   />
                   <ReferenceLine x="Day 1" stroke={theme.chartText} strokeDasharray="3 3" label={{ value: "START", fill: theme.chartText, fontSize: 10, position: 'insideTopRight' }} />
+                  {/* Primary XAxis for Body */}
                   <XAxis
                     dataKey="day"
                     stroke={theme.chartText}
@@ -232,6 +238,12 @@ const StockDetail = ({
                     axisLine={false}
                     interval="preserveStartEnd"
                     minTickGap={20}
+                  />
+                  {/* Secondary Hidden XAxis for Wick to ensure centering overlap */}
+                  <XAxis
+                    xAxisId="wick-axis"
+                    dataKey="day"
+                    hide={true}
                   />
                   <YAxis
                     domain={["auto", "auto"]}
@@ -246,30 +258,60 @@ const StockDetail = ({
                     contentStyle={{
                       backgroundColor: theme.tooltipBg,
                       border: `1px solid ${theme.tooltipBorder}`,
-                      borderRadius: "8px",
+                      borderRadius: "4px",
                       color: theme.tooltipText,
+                      fontSize: "12px",
+                      fontWeight: "bold",
                     }}
-                    itemStyle={{ color: theme.tooltipText }}
+                    itemStyle={{ display: 'none' }}
                     labelStyle={{
                       color: theme.chartText,
-                      marginBottom: "0.5rem",
+                      marginBottom: "0.25rem",
                     }}
+                    formatter={(value, name, props) => {
+                      if (name === 'Body') {
+                        const { open, close, high, low, day } = props.payload;
+                        return [
+                          <div key={day} className="space-y-1 font-mono text-xs">
+                            <div className="flex justify-between gap-4"><span className="text-gray-400">Open:</span> <span>{open.toLocaleString()}</span></div>
+                            <div className="flex justify-between gap-4"><span className="text-gray-400">High:</span> <span>{high.toFixed(0).toLocaleString()}</span></div>
+                            <div className="flex justify-between gap-4"><span className="text-gray-400">Low:</span> <span>{low.toFixed(0).toLocaleString()}</span></div>
+                            <div className="flex justify-between gap-4"><span className="text-gray-400">Close:</span> <span>{close.toLocaleString()}</span></div>
+                          </div>,
+                          ""
+                        ]
+                      }
+                      return [];
+                    }}
+                    cursor={{ stroke: theme.chartText, strokeWidth: 1, strokeDasharray: '4 4' }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="price"
-                    stroke={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
-                    strokeWidth={3}
-                    fill="url(#chartGradient)"
-                    dot={chartData.length === 1 ? { r: 4 } : false}
-                    animationDuration={500}
-                  />
-                </AreaChart>
+                  {/* Wick Bar on secondary axis */}
+                  <Bar
+                    dataKey="wickRange"
+                    barSize={1}
+                    xAxisId="wick-axis"
+                    isAnimationActive={false}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-wick-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                  {/* Body Bar on primary axis */}
+                  <Bar
+                    dataKey="bodyRange"
+                    barSize={12}
+                    isAnimationActive={false}
+                    name="Body"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-body-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* AI Insights & Deep Analysis */}
           <div
             className={`${theme.cardBg} p-4 md:p-6 rounded-2xl border ${theme.cardBorder} relative overflow-hidden transition-all shadow-sm`}
           >
@@ -350,7 +392,6 @@ const StockDetail = ({
           </div>
         </div>
 
-        {/* Order Panel - Right Column */}
         <div className="lg:w-[350px] space-y-6">
           <div
             className={`${theme.cardBg} p-6 rounded-2xl border ${theme.cardBorder} flex flex-col shadow-xl h-fit sticky top-24`}
@@ -397,7 +438,7 @@ const StockDetail = ({
                     className={`font-mono font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"
                       }`}
                   >
-                    {formatCurrency(myAvg)}
+                    {formatNumber(myAvg)} 원
                   </span>
                 </div>
               )}
@@ -457,7 +498,7 @@ const StockDetail = ({
                   className={`text-xl font-black font-mono ${orderType === "BUY" ? "text-red-500" : "text-blue-500"
                     }`}
                 >
-                  {formatCurrency(totalOrderPrice)}
+                  {formatNumber(totalOrderPrice)} 원
                 </span>
               </div>
 
@@ -498,4 +539,3 @@ const StockDetail = ({
 };
 
 export default StockDetail;
-
