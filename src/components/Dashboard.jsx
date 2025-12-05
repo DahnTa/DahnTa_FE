@@ -7,7 +7,7 @@ import {
   TrendingDown,
   Heart,
 } from "lucide-react";
-import { formatNumber } from "../utils/formatters";
+import { formatNumber, formatCurrency } from "../utils/formatters";
 import { MARKET_DATA } from "../utils/marketData";
 
 const Dashboard = ({
@@ -139,7 +139,7 @@ const Dashboard = ({
                     <span
                       className={`text-xl md:text-2xl font-black font-mono ${theme.textMain}`}
                     >
-                      {formatNumber(currentPrice)}
+                      {formatCurrency(currentPrice)}
                     </span>
                   </div>
                   <div
@@ -170,7 +170,7 @@ const Dashboard = ({
                     <p
                       className={`text-sm font-mono font-bold ${theme.subText}`}
                     >
-                      {formatNumber(prevPrice)}
+                      {formatCurrency(prevPrice)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -185,7 +185,7 @@ const Dashboard = ({
                       }`}
                     >
                       {isUp ? "+" : ""}
-                      {formatNumber(change)}
+                      {formatCurrency(change)}
                     </p>
                   </div>
                 </div>

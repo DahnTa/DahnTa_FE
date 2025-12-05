@@ -134,7 +134,7 @@ export const GameOverModal = ({ gameState, onReset }) => {
     stockValue += data.quantity * currentPrice;
   });
   const finalTotal = gameState.balance + stockValue;
-  const initial = 10000000;
+  const initial = 10000;
   const profit = finalTotal - initial;
   const profitRate = (profit / initial) * 100;
 

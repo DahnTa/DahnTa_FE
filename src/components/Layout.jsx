@@ -7,7 +7,7 @@ import {
   Loader2,
   ChevronRight,
 } from "lucide-react";
-import { formatKRW, formatNumber } from "../utils/formatters";
+import { formatKRW, formatNumber, formatCurrency } from "../utils/formatters";
 import { MARKET_DATA } from "../utils/marketData";
 import Header from "./Header";
 
@@ -65,7 +65,7 @@ const Layout = ({
       stockValue += data.quantity * currentPrice;
     });
     const total = gameState.balance + stockValue;
-    const initial = 10000000;
+    const initial = 10000;
     const profit = total - initial;
     const profitRate = (profit / initial) * 100;
     return { total, profit, profitRate, cash: gameState.balance, stockValue };
@@ -172,7 +172,7 @@ const Layout = ({
                         assets.profit >= 0 ? "text-red-500" : "text-blue-500"
                       }`}
                     >
-                      {formatKRW(assets.total)}
+                      {formatCurrency(assets.total)}
                     </p>
                     <div
                       className={`flex justify-between text-sm mt-3 pt-3 border-t ${theme.cardBorder}`}
@@ -191,7 +191,7 @@ const Layout = ({
                         className={`${theme.textSub} text-xs flex items-center`}
                       >
                         {assets.profit > 0 ? "+" : ""}
-                        {formatNumber(assets.profit)}
+                        {formatCurrency(assets.profit)}
                       </span>
                     </div>
                   </div>
@@ -209,7 +209,7 @@ const Layout = ({
                     <p
                       className={`font-mono text-sm font-bold ${theme.textMain}`}
                     >
-                      {formatNumber(assets.cash)}
+                      {formatCurrency(assets.cash)}
                     </p>
                   </div>
                   <div
@@ -223,7 +223,7 @@ const Layout = ({
                     <p
                       className={`font-mono text-sm font-bold ${theme.textMain}`}
                     >
-                      {formatNumber(assets.stockValue)}
+                      {formatCurrency(assets.stockValue)}
                     </p>
                   </div>
                 </div>
@@ -280,7 +280,7 @@ const Layout = ({
                                 <span
                                   className={`text-xs ${theme.textSub} font-mono`}
                                 >
-                                  {formatNumber(currPrice * data.quantity)}
+                                  {formatCurrency(currPrice * data.quantity)}
                                 </span>
                               </div>
                             </li>

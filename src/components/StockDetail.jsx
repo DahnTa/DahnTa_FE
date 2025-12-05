@@ -390,7 +390,7 @@ const StockDetail = ({
                       isDarkMode ? "text-slate-200" : "text-slate-800"
                     }`}
                   >
-                    {formatNumber(myAvg)} 원
+                    {formatCurrency(myAvg)}
                   </span>
                 </div>
               )}
@@ -452,7 +452,7 @@ const StockDetail = ({
                     orderType === "BUY" ? "text-red-500" : "text-blue-500"
                   }`}
                 >
-                  {formatNumber(totalOrderPrice)} 원
+                  {formatCurrency(totalOrderPrice)}
                 </span>
               </div>
 

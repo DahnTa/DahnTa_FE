@@ -50,7 +50,7 @@ export default function App() {
     const initialGame = {
       startDayIndex,
       currentDayOffset: 0,
-      balance: 10000000,
+      balance: 10000,
       portfolio: {},
       watchlist: [],
       transactions: [],

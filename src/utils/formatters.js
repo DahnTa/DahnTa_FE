@@ -1,8 +1,8 @@
 // --- Formatters ---
 export const formatKRW = (val) =>
-  new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(val);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
 
-export const formatNumber = (val) => new Intl.NumberFormat("ko-KR").format(val);
+export const formatNumber = (val) => new Intl.NumberFormat("en-US").format(val);
 
 export const formatCurrency = formatKRW;
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { User, Activity, Heart } from "lucide-react";
-import { formatNumber } from "../utils/formatters";
+import { formatNumber, formatCurrency } from "../utils/formatters";
 import { MARKET_DATA } from "../utils/marketData";
 
 const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
@@ -150,7 +150,7 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                       <td
                         className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textMain} whitespace-nowrap`}
                       >
-                        {formatNumber(tx.price * tx.quantity)}
+                        {formatCurrency(tx.price * tx.quantity)}
                       </td>
                     </tr>
                   ))
@@ -243,7 +243,7 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                         <td
                           className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textMain} border-r ${theme.tableCellBorder} whitespace-nowrap`}
                         >
-                          {formatNumber(price)}
+                          {formatCurrency(price)}
                         </td>
                         <td
                           className={`px-2 md:px-4 py-3 md:py-4 font-bold border-r ${
