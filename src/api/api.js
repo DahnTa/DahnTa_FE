@@ -20,7 +20,7 @@ export const changePasswordApi = withAuth(async (payload) =>
 // Stock
 
 export const fetchStockList = withAuth(async () => {
-  const res = await apiRequest("/api/stock/");
+  const res = await apiRequest("/api/stock");
   return (res?.dashBoard || []).map(normalizeStockSummary);
 });
 
