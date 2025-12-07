@@ -9,7 +9,7 @@ const buildUrl = (path) => {
 };
 
 export const login = async ({ userAccount, userPassword }) => {
-  const res = await apiRequest("/api/auth/login", {
+  const res = await apiRequest("/api/auths/login", {
     method: "POST",
     body: { userAccount, userPassword },
   });
@@ -20,10 +20,10 @@ export const login = async ({ userAccount, userPassword }) => {
 };
 
 export const signup = async (payload) =>
-  apiRequest("/api/auth/signup", { method: "POST", body: payload });
+  apiRequest("/api/auths/signup", { method: "POST", body: payload });
 
 export const changePassword = async (payload) =>
-  apiRequest("/api/auth/password", { method: "POST", body: payload });
+  apiRequest("/api/auths/password", { method: "POST", body: payload });
 
 export const refreshToken = async () => {
   const tokens = getTokens();

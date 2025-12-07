@@ -38,7 +38,7 @@ const ApiTestPanel = ({ onClose }) => {
     // 2. 서버 연결 테스트 (CORS 및 기본 연결)
     try {
       const startTime = Date.now();
-      const res = await fetch(`${BASE_URL}/api/stock/`, {
+      const res = await fetch(`${BASE_URL}/api/stocks`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -78,7 +78,7 @@ const ApiTestPanel = ({ onClose }) => {
     // 3. 로그인 API 테스트 (잘못된 자격증명으로 테스트)
     try {
       const startTime = Date.now();
-      const res = await fetch(`${BASE_URL}/api/auth/login`, {
+      const res = await fetch(`${BASE_URL}/api/auths/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -122,7 +122,7 @@ const ApiTestPanel = ({ onClose }) => {
 
     // 4. CORS 체크
     try {
-      const res = await fetch(`${BASE_URL}/api/auth/login`, {
+      const res = await fetch(`${BASE_URL}/api/auths/login`, {
         method: "OPTIONS",
       });
       addResult(
