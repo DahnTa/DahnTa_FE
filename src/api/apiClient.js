@@ -18,6 +18,12 @@ export const apiRequest = async (path, options = {}) => {
     headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
 
+  // 디버그: 요청 정보 출력
+  console.log(`[API] ${options.method || "GET"} ${path}`, {
+    hasToken: !!tokens?.accessToken,
+    tokenPreview: tokens?.accessToken ? `${tokens.accessToken.substring(0, 20)}...` : null,
+  });
+
   const doFetch = async () => {
     const res = await fetch(buildUrl(path), {
       method: options.method || "GET",
