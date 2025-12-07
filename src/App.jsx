@@ -113,16 +113,16 @@ export default function App() {
         setInterests([]);
         return;
       }
-      const [assetRes, holdingsRes, txRes, interestRes] = await Promise.all([
+      // interest 호출은 백엔드 500 발생으로 임시 제외
+      const [assetRes, holdingsRes, txRes] = await Promise.all([
         fetchAsset(),
         fetchHoldings(),
         fetchTransactions(),
-        fetchInterest(),
       ]);
       setAsset(assetRes);
       setHoldings(holdingsRes);
       setTransactions(txRes);
-      setInterests(interestRes);
+      setInterests([]); // 임시 비움
     } catch (error) {
       console.error("사용자 데이터 로드 실패", error);
     }
