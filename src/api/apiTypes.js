@@ -16,7 +16,8 @@ export const normalizeStockSummary = (item) => ({
 });
 
 export const normalizeHolding = (item) => ({
-  stockId: item.stockId ?? item.id,
+  // 백엔드에서 stockId를 안 주므로 stockTag를 식별자로 사용
+  stockId: item.stockId ?? item.stockTag ?? item.stockName,
   stockName: item.stockName,
   stockTag: item.stockTag,
   quantity: item.quantity,

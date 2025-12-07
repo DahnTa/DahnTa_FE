@@ -160,9 +160,9 @@ export default function App() {
     setLoadingMessage("게임 세션 시작 중...");
     try {
       await startGame();
-      setLoadingMessage("서버에서 데이터 준비 중...");
-      // 백엔드 데이터 준비 시간을 위해 잠시 대기 후 재시도 로직으로 데이터 로드
-      await delay(1500);
+      setLoadingMessage("서버에서 데이터 준비 중... (약 10초 소요)");
+      // 백엔드 데이터 준비 시간을 위해 10초 대기 후 재시도 로직으로 데이터 로드
+      await delay(10000);
       await bootstrapWithRetry(3, 2000);
     } finally {
       setLoading(false);
