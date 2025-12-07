@@ -13,7 +13,7 @@ import {
 import { signupApi } from "../api/api";
 import ApiTestPanel from "./ApiTestPanel";
 
-const AuthScreen = ({ onLogin }) => {
+const AuthScreen = ({ onLogin, onGuestLogin }) => {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -326,6 +326,15 @@ const AuthScreen = ({ onLogin }) => {
                 회원가입
               </>
             )}
+          </button>
+        )}
+
+        {mode === "login" && (
+          <button
+            onClick={onGuestLogin}
+            className="mt-3 w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 border border-slate-700"
+          >
+            게스트 모드로 둘러보기
           </button>
         )}
 

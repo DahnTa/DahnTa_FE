@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
+  ChevronRight,
   Heart,
   Loader2,
   Plus,
@@ -25,6 +26,7 @@ import {
   fetchStockNews,
   fetchStockTotal,
   fetchOrderDetail,
+  fetchMacro,
   buyStock,
   sellStock,
 } from "../api/api";
@@ -36,6 +38,7 @@ const StockDetail = ({
   toggleWatchlist,
   interests,
   onOrdered,
+  isGuest = false,
 }) => {
   const [detail, setDetail] = useState(null);
   const [orderMeta, setOrderMeta] = useState(null);
@@ -43,11 +46,15 @@ const StockDetail = ({
   const [company, setCompany] = useState(null);
   const [news, setNews] = useState(null);
   const [total, setTotal] = useState(null);
+  const [macro, setMacro] = useState(null);
   const [amount, setAmount] = useState(1);
   const [orderType, setOrderType] = useState("BUY");
   const [loading, setLoading] = useState(false);
   const [ordering, setOrdering] = useState(false);
   const [error, setError] = useState("");
+  const [infoIndex, setInfoIndex] = useState(0);
+  const [infoAnimating, setInfoAnimating] = useState(false);
+  const infoTimerRef = useRef(null);
 
   const isWatching = interests?.some((item) => item.stockId === stockId);
 
@@ -87,10 +94,31 @@ const StockDetail = ({
 
   const loadData = async () => {
     if (!stockId) return;
+    if (isGuest) {
+      const fallbackPrice = 100;
+      setDetail({
+        stockName: `게스트 종목 ${stockId}`,
+        stockTag: stockId,
+        marketPrices: Array.from({ length: 10 }, (_, i) => fallbackPrice + i),
+        currentPrice: fallbackPrice + 10,
+        changeRate: 1.0,
+      });
+      setOrderMeta({
+        quantity: 0,
+        availableOrderAmount: 10000000,
+      });
+      setReddit(null);
+      setCompany(null);
+      setNews(null);
+      setTotal(null);
+      setMacro({ content: "거시경제지표는 게스트 모드에서 표시되지 않습니다." });
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const [detailRes, orderRes, redditRes, companyRes, newsRes, totalRes] =
+      const [detailRes, orderRes, redditRes, companyRes, newsRes, totalRes, macroRes] =
         await Promise.all([
           fetchStockDetail(stockId),
           fetchOrderDetail(stockId),
@@ -98,6 +126,7 @@ const StockDetail = ({
           fetchStockCompany(stockId),
           fetchStockNews(stockId),
           fetchStockTotal(stockId),
+          fetchMacro(),
         ]);
       setDetail(detailRes);
       setOrderMeta(orderRes);
@@ -105,6 +134,7 @@ const StockDetail = ({
       setCompany(companyRes);
       setNews(newsRes);
       setTotal(totalRes);
+      setMacro(macroRes);
     } catch (err) {
       const msg = err?.data?.message || err?.message || "데이터를 불러오지 못했습니다.";
       setError(msg);
@@ -147,6 +177,10 @@ const StockDetail = ({
 
   const handleOrder = async () => {
     if (!detail) return;
+    if (isGuest) {
+      setError("게스트 모드에서는 주문이 비활성화됩니다.");
+      return;
+    }
     setOrdering(true);
     setError("");
     try {
@@ -174,6 +208,45 @@ const StockDetail = ({
       </p>
     </div>
   );
+
+  const infoItems = [
+    { title: "종합 분석", content: total?.analyze || total?.content },
+    { title: "재무제표", content: company?.content },
+    { title: "거시경제지표", content: macro?.content },
+    { title: "Reddit", content: reddit?.content },
+    { title: "뉴스", content: news?.content },
+  ];
+
+  const startInfoAnimation = () => {
+    if (infoTimerRef.current) clearTimeout(infoTimerRef.current);
+    setInfoAnimating(true);
+    infoTimerRef.current = setTimeout(() => setInfoAnimating(false), 320);
+  };
+
+  const handlePrevInfo = () => {
+    startInfoAnimation();
+    setInfoIndex((prev) => (prev - 1 + infoItems.length) % infoItems.length);
+  };
+  const handleNextInfo = () => {
+    startInfoAnimation();
+    setInfoIndex((prev) => (prev + 1) % infoItems.length);
+  };
+
+  // 자동 재생 (4초 간격)
+  useEffect(() => {
+    if (infoItems.length <= 1) return undefined;
+    const id = setInterval(() => {
+      startInfoAnimation();
+      setInfoIndex((prev) => (prev + 1) % infoItems.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [infoItems.length]);
+
+  useEffect(() => {
+    return () => {
+      if (infoTimerRef.current) clearTimeout(infoTimerRef.current);
+    };
+  }, []);
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto h-full flex flex-col pb-24">
@@ -298,11 +371,55 @@ const StockDetail = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInfoCard("Reddit", reddit?.content)}
-              {renderInfoCard("뉴스", news?.content)}
-              {renderInfoCard("재무제표", company?.content)}
-              {renderInfoCard("종합 분석", total?.analyze || total?.content)}
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-bold ${theme.textSub}`}>슬라이드 정보</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrevInfo}
+                    className={`p-2 rounded-full border ${theme.cardBorder} ${theme.textSub} hover:${theme.textMain} transition-colors`}
+                    title="이전"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <span className={`text-xs font-bold ${theme.textSub}`}>
+                    {infoIndex + 1} / {infoItems.length}
+                  </span>
+                  <button
+                    onClick={handleNextInfo}
+                    className={`p-2 rounded-full border ${theme.cardBorder} ${theme.textSub} hover:${theme.textMain} transition-colors`}
+                    title="다음"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className={`transition-all duration-350 ease-in-out ${
+                  infoAnimating ? "opacity-0 translate-y-3" : "opacity-100 translate-y-0"
+                }`}
+                key={infoIndex}
+              >
+                {renderInfoCard(infoItems[infoIndex].title, infoItems[infoIndex].content)}
+              </div>
+
+              <div className="flex justify-center gap-2 mt-3">
+                {infoItems.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setInfoIndex(idx)}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                      idx === infoIndex
+                        ? "bg-blue-500"
+                        : isDarkMode
+                        ? "bg-slate-700 hover:bg-slate-500"
+                        : "bg-slate-300 hover:bg-slate-400"
+                    }`}
+                    aria-label={`슬라이드 ${idx + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 

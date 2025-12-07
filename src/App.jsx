@@ -19,9 +19,11 @@ import {
 import { createDefaultGameState } from "./api/apiTypes";
 import { login as loginService, logout as logoutService } from "./services/authService";
 import { isAuthenticated } from "./services/tokenService";
+import { STOCK_INFO } from "./utils/marketData";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
+  const [isGuest, setIsGuest] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [selectedStockId, setSelectedStockId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,28 @@ export default function App() {
   const [gameState, setGameState] = useState(createDefaultGameState());
   const [gameResult, setGameResult] = useState(null);
 
+  const guestStocks = STOCK_INFO.map((s, idx) => {
+    const base = s.basePrice || 100;
+    const currentPrice = base * 1.01;
+    return {
+      id: `G${idx + 1}`,
+      stockName: s.name,
+      stockTag: s.ticker,
+      currentPrice,
+      marketPrice: base,
+      changeRate: 1.01,
+      changeAmount: currentPrice - base,
+    };
+  });
+
+  const guestAsset = {
+    totalAmount: 10000000,
+    creditChangeRate: 0,
+    creditChangeAmount: 0,
+    userCredit: 10000000,
+    stockValuation: 0,
+  };
+
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   const bootstrap = async () => {
@@ -48,15 +72,19 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || isGuest) {
       setLoading(false);
       return;
     }
     bootstrap();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isGuest]);
 
   const loadStocks = async () => {
     try {
+      if (isGuest) {
+        setStocks(guestStocks);
+        return;
+      }
       const list = await fetchStockList();
       setStocks(list);
     } catch (error) {
@@ -66,6 +94,13 @@ export default function App() {
 
   const loadUserData = async () => {
     try {
+      if (isGuest) {
+        setAsset(guestAsset);
+        setHoldings([]);
+        setTransactions([]);
+        setInterests([]);
+        return;
+      }
       const [assetRes, holdingsRes, txRes, interestRes] = await Promise.all([
         fetchAsset(),
         fetchHoldings(),
@@ -99,9 +134,22 @@ export default function App() {
     }
   };
 
+  const handleGuestLogin = async () => {
+    setIsGuest(true);
+    setIsLoggedIn(true);
+    setGameState(createDefaultGameState());
+    setStocks(guestStocks);
+    setAsset(guestAsset);
+    setHoldings([]);
+    setTransactions([]);
+    setInterests([]);
+    setLoading(false);
+  };
+
   const handleLogout = () => {
     logoutService();
     setIsLoggedIn(false);
+    setIsGuest(false);
     setGameState(createDefaultGameState());
     setStocks([]);
     setAsset(null);
@@ -113,6 +161,11 @@ export default function App() {
   };
 
   const resetGame = async () => {
+    if (isGuest) {
+      setGameState(createDefaultGameState());
+      setGameResult(null);
+      return;
+    }
     setIsProcessing(true);
     try {
       await startGame();
@@ -130,6 +183,10 @@ export default function App() {
   };
 
   const handleNextDay = async () => {
+    if (isGuest) {
+      // 게스트 모드는 진행 불가
+      return;
+    }
     setIsProcessing(true);
     try {
       await nextGameDay();
@@ -154,6 +211,10 @@ export default function App() {
   };
 
   const handleFinishGame = async () => {
+    if (isGuest) {
+      setGameState((prev) => ({ ...prev, isGameOver: true }));
+      return;
+    }
     try {
       await finishGame();
       const result = await fetchGameResult();
@@ -166,6 +227,25 @@ export default function App() {
 
   const toggleWatchlist = async (stockId) => {
     try {
+      if (isGuest) {
+        setInterests((prev) => {
+          const exists = prev.some((item) => item.stockId === stockId);
+          if (exists) return prev.filter((i) => i.stockId !== stockId);
+          const stock = stocks.find((s) => s.id === stockId);
+          if (!stock) return prev;
+          return [
+            ...prev,
+            {
+              stockId,
+              stockName: stock.stockName,
+              stockTag: stock.stockTag,
+              currentPrice: stock.currentPrice,
+              changeRate: stock.changeRate,
+            },
+          ];
+        });
+        return;
+      }
       const isWatching = interests.some((item) => item.stockId === stockId);
       if (isWatching) {
         await import("./api/api").then((m) => m.dislikeInterest(stockId));
@@ -198,7 +278,7 @@ export default function App() {
     );
 
   if (!isLoggedIn) {
-    return <AuthScreen onLogin={handleLogin} />;
+    return <AuthScreen onLogin={handleLogin} onGuestLogin={handleGuestLogin} />;
   }
 
   return (
@@ -233,6 +313,7 @@ export default function App() {
           isDarkMode={isDarkMode}
           toggleWatchlist={toggleWatchlist}
           interests={interests}
+          isGuest={isGuest}
           onOrdered={async () => {
             await loadUserData();
             await loadStocks();
