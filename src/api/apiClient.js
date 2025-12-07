@@ -19,10 +19,9 @@ export const apiRequest = async (path, options = {}) => {
   }
 
   // 디버그: 요청 정보 출력
-  console.log(`[API] ${options.method || "GET"} ${path}`, {
-    hasToken: !!tokens?.accessToken,
-    tokenPreview: tokens?.accessToken ? `${tokens.accessToken.substring(0, 20)}...` : null,
-  });
+  const hasToken = !!tokens?.accessToken;
+  const tokenPreview = tokens?.accessToken ? tokens.accessToken.substring(0, 30) : "없음";
+  console.log(`[API] ${options.method || "GET"} ${path} | 토큰있음: ${hasToken} | 토큰: ${tokenPreview}`);
 
   const doFetch = async () => {
     const res = await fetch(buildUrl(path), {
