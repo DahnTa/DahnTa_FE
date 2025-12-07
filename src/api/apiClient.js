@@ -18,10 +18,11 @@ export const apiRequest = async (path, options = {}) => {
     headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
 
-  // 디버그: 요청 정보 출력
+  // 디버그: 요청 정보 출력 (토큰 전체)
   const hasToken = !!tokens?.accessToken;
-  const tokenPreview = tokens?.accessToken ? tokens.accessToken.substring(0, 30) : "없음";
-  console.log(`[API] ${options.method || "GET"} ${path} | 토큰있음: ${hasToken} | 토큰: ${tokenPreview}`);
+  const fullToken = tokens?.accessToken || "없음";
+  console.log(`[API] ${options.method || "GET"} ${path} | 토큰있음: ${hasToken}`);
+  console.log(`[API] 토큰 전체:`, fullToken);
 
   const doFetch = async () => {
     const res = await fetch(buildUrl(path), {
