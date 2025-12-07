@@ -1,27 +1,132 @@
 import React, { useState } from "react";
-import { TrendingUp, User, Lock, UserPlus } from "lucide-react";
+import {
+  TrendingUp,
+  User,
+  Lock,
+  UserPlus,
+  Loader2,
+  Mail,
+  ArrowLeft,
+  CheckCircle,
+  Wifi,
+} from "lucide-react";
+import { signupApi } from "../api/api";
+import ApiTestPanel from "./ApiTestPanel";
 
 const AuthScreen = ({ onLogin }) => {
-  const [id, setId] = useState("");
-  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState("login"); // "login" | "signup"
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showApiTest, setShowApiTest] = useState(false);
 
-  const handleLogin = () => {
-    if (id === "1111" && password === "1111") {
-      onLogin();
-    } else {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+  // 로그인 폼
+  const [loginId, setLoginId] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  // 회원가입 폼
+  const [signupAccount, setSignupAccount] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupNickName, setSignupNickName] = useState("");
+
+  const resetForms = () => {
+    setLoginId("");
+    setLoginPassword("");
+    setSignupAccount("");
+    setSignupPassword("");
+    setSignupPasswordConfirm("");
+    setSignupName("");
+    setSignupNickName("");
+    setError("");
+    setSuccess("");
+  };
+
+  const switchMode = (newMode) => {
+    resetForms();
+    setMode(newMode);
+  };
+
+  const handleLogin = async () => {
+    setError("");
+    if (!loginId || !loginPassword) {
+      setError("아이디와 비밀번호를 입력해주세요.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await onLogin({ userAccount: loginId, userPassword: loginPassword });
+    } catch (err) {
+      const msg =
+        err?.data?.message ||
+        err?.message ||
+        "로그인에 실패했습니다. 네트워크 또는 API URL을 확인해주세요.";
+      console.error("Login failed", err);
+      setError(msg || "로그인에 실패했습니다.");
+      setIsLoading(false);
+      return;
     }
   };
 
+  const handleSignup = async () => {
+    setError("");
+    setSuccess("");
+
+    // 유효성 검사
+    if (!signupAccount || !signupPassword || !signupName || !signupNickName) {
+      setError("모든 필수 항목을 입력해주세요.");
+      return;
+    }
+    if (signupPassword.length < 4) {
+      setError("비밀번호는 4자 이상이어야 합니다.");
+      return;
+    }
+    if (signupPassword !== signupPasswordConfirm) {
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await signupApi({
+        userAccount: signupAccount,
+        userPassword: signupPassword,
+        userName: signupName,
+        userNickName: signupNickName,
+        userProfileImageUrl: "", // 기본값
+      });
+      setSuccess("회원가입이 완료되었습니다! 로그인해주세요.");
+      setTimeout(() => {
+        switchMode("login");
+        setLoginId(signupAccount);
+      }, 1500);
+    } catch (err) {
+      const msg =
+        err?.data?.message || err?.message || "회원가입에 실패했습니다.";
+      console.error("Signup failed", err);
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const inputClass =
+    "w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 outline-none transition-all placeholder-slate-500";
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Effects */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+        {mode === "signup" && (
+          <div className="absolute top-[30%] right-[-5%] w-[30%] h-[30%] bg-emerald-600/15 rounded-full blur-[100px] animate-pulse delay-500"></div>
+        )}
       </div>
 
       <div className="z-10 text-center max-w-sm w-full bg-slate-900/60 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl transform transition-all">
+        {/* Logo */}
         <div className="mb-6 flex justify-center">
           <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg shadow-blue-900/40">
             <TrendingUp size={40} className="text-white" />
@@ -30,75 +135,221 @@ const AuthScreen = ({ onLogin }) => {
         <h1 className="text-4xl font-black text-white mb-2 tracking-tighter italic">
           StockSim
         </h1>
-        <p className="text-slate-400 mb-8 text-sm font-medium">
-          실전 투자 시뮬레이션에 오신 것을 환영합니다.
+        <p className="text-slate-400 mb-6 text-sm font-medium">
+          {mode === "login"
+            ? "실전 투자 시뮬레이션에 오신 것을 환영합니다."
+            : "새 계정을 만들어 시작하세요."}
         </p>
 
-        <div className="space-y-3 mb-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User size={18} className="text-slate-500" />
-            </div>
-            <input
-              type="text"
-              placeholder="아이디"
-              value={id}
-              onChange={(e) => {
-                setId(e.target.value);
-                setError("");
-              }}
-              className="w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 outline-none transition-all placeholder-slate-500"
-            />
-          </div>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock size={18} className="text-slate-500" />
-            </div>
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              className="w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 outline-none transition-all placeholder-slate-500"
-            />
-          </div>
-          {error && (
-            <p className="text-red-400 text-xs text-left pl-1">{error}</p>
-          )}
-        </div>
-
-        <div className="space-y-3">
+        {/* Tab Buttons */}
+        <div className="flex bg-slate-950/50 p-1 rounded-xl mb-6 border border-slate-800">
           <button
-            onClick={handleLogin}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+            onClick={() => switchMode("login")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+              mode === "login"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
+            <User size={16} />
             로그인
           </button>
-
           <button
-            className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 border border-slate-700"
-            onClick={() =>
-              alert(
-                "현재 회원가입은 닫혀있습니다. 아이디 '1111', 비밀번호 '1111'로 로그인해주세요."
-              )
-            }
+            onClick={() => switchMode("signup")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+              mode === "signup"
+                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
             <UserPlus size={16} />
             회원가입
           </button>
         </div>
 
-        <p className="mt-8 text-[10px] text-slate-600 font-mono">
-          Demo Account: 1111 / 1111
+        {/* Login Form */}
+        {mode === "login" && (
+          <div className="space-y-3 mb-6 animate-in fade-in duration-300">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <User size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="text"
+                placeholder="아이디"
+                value={loginId}
+                onChange={(e) => {
+                  setLoginId(e.target.value);
+                  setError("");
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="password"
+                placeholder="비밀번호"
+                value={loginPassword}
+                onChange={(e) => {
+                  setLoginPassword(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Signup Form */}
+        {mode === "signup" && (
+          <div className="space-y-3 mb-6 animate-in fade-in duration-300">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="text"
+                placeholder="아이디 (계정)"
+                value={signupAccount}
+                onChange={(e) => {
+                  setSignupAccount(e.target.value);
+                  setError("");
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="password"
+                placeholder="비밀번호 (4자 이상)"
+                value={signupPassword}
+                onChange={(e) => {
+                  setSignupPassword(e.target.value);
+                  setError("");
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="password"
+                placeholder="비밀번호 확인"
+                value={signupPasswordConfirm}
+                onChange={(e) => {
+                  setSignupPasswordConfirm(e.target.value);
+                  setError("");
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <User size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="text"
+                placeholder="이름"
+                value={signupName}
+                onChange={(e) => {
+                  setSignupName(e.target.value);
+                  setError("");
+                }}
+                className={inputClass}
+              />
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <UserPlus size={18} className="text-slate-500" />
+              </div>
+              <input
+                type="text"
+                placeholder="닉네임"
+                value={signupNickName}
+                onChange={(e) => {
+                  setSignupNickName(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSignup()}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Error & Success Messages */}
+        {error && (
+          <p className="text-red-400 text-xs text-left pl-1 mb-4 animate-in fade-in">
+            {error}
+          </p>
+        )}
+        {success && (
+          <div className="flex items-center gap-2 text-emerald-400 text-sm mb-4 animate-in fade-in bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+            <CheckCircle size={18} />
+            {success}
+          </div>
+        )}
+
+        {/* Submit Button */}
+        {mode === "login" ? (
+          <button
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-60 disabled:transform-none"
+          >
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={18} />
+            ) : (
+              "로그인"
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={handleSignup}
+            disabled={isLoading}
+            className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-emerald-900/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-60 disabled:transform-none"
+          >
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={18} />
+            ) : (
+              <>
+                <UserPlus size={18} />
+                회원가입
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Footer Text */}
+        <p className="text-slate-500 text-xs mt-6">
+          {mode === "login"
+            ? "계정이 없으신가요? 위 탭에서 회원가입을 선택하세요."
+            : "이미 계정이 있으신가요? 위 탭에서 로그인을 선택하세요."}
         </p>
+
+        {/* API Test Button */}
+        <button
+          onClick={() => setShowApiTest(true)}
+          className="mt-4 text-slate-600 hover:text-slate-400 text-xs flex items-center justify-center gap-1 transition-colors"
+        >
+          <Wifi size={12} />
+          API 연결 테스트
+        </button>
       </div>
+
+      {/* API Test Panel */}
+      {showApiTest && <ApiTestPanel onClose={() => setShowApiTest(false)} />}
     </div>
   );
 };
 
 export default AuthScreen;
-

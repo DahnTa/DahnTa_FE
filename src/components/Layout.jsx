@@ -7,13 +7,14 @@ import {
   Loader2,
   ChevronRight,
 } from "lucide-react";
-import { formatKRW, formatNumber, formatCurrency } from "../utils/formatters";
-import { MARKET_DATA } from "../utils/marketData";
+import { formatCurrency } from "../utils/formatters";
 import Header from "./Header";
 
 const Layout = ({
   children,
   gameState,
+  asset,
+  holdings = [],
   onNextDay,
   onReset,
   currentPage,
@@ -54,24 +55,13 @@ const Layout = ({
         mobileToggleText: "text-white",
       };
 
-  const calculateAssets = () => {
-    if (!gameState) return { total: 0, profit: 0, profitRate: 0 };
-    let stockValue = 0;
-    Object.entries(gameState.portfolio).forEach(([sid, data]) => {
-      const currentPrice =
-        MARKET_DATA[sid].prices[
-          gameState.startDayIndex + gameState.currentDayOffset
-        ];
-      stockValue += data.quantity * currentPrice;
-    });
-    const total = gameState.balance + stockValue;
-    const initial = 10000;
-    const profit = total - initial;
-    const profitRate = (profit / initial) * 100;
-    return { total, profit, profitRate, cash: gameState.balance, stockValue };
+  const assets = {
+    total: asset?.totalAmount ?? 0,
+    profit: asset?.creditChangeAmount ?? 0,
+    profitRate: asset?.creditChangeRate ?? 0,
+    cash: asset?.userCredit ?? 0,
+    stockValue: asset?.stockValuation ?? 0,
   };
-
-  const assets = calculateAssets();
 
   return (
     <div
@@ -89,39 +79,31 @@ const Layout = ({
       />
 
       <div className="flex flex-1 pt-16 overflow-hidden">
-        {/* Main Content Area */}
         <main
           className={`flex-1 overflow-y-auto h-[calc(100vh-4rem)] relative ${theme.bg} order-2 md:order-1 scrollbar-hide`}
         >
           {children}
         </main>
 
-        {/* Sidebar */}
         <aside
           className={`fixed md:sticky top-16 h-[calc(100vh-4rem)] w-full md:w-80 ${
             theme.sidebarBg
           } border-l ${
             theme.sidebarBorder
           } flex flex-col transition-transform duration-300 z-40 order-1 md:order-2 ${
-            isSidebarOpen
-              ? "translate-x-0"
-              : "translate-x-full md:translate-x-0"
+            isSidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
           } right-0 shadow-2xl`}
         >
           <div
             className={`p-4 border-b ${theme.sidebarBorder} backdrop-blur flex justify-between items-center md:hidden`}
           >
             <span className="font-bold">내 계좌 현황</span>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className={theme.textSub}
-            >
+            <button onClick={() => setIsSidebarOpen(false)} className={theme.textSub}>
               <ChevronRight />
             </button>
           </div>
 
           <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-            {/* Mobile Navigation */}
             <div
               className={`md:hidden space-y-2 mb-6 border-b ${theme.sidebarBorder} pb-6`}
             >
@@ -131,9 +113,7 @@ const Layout = ({
                   setIsSidebarOpen(false);
                 }}
                 className={`w-full text-left p-3 rounded ${
-                  currentPage === "dashboard"
-                    ? "bg-blue-50 text-blue-600"
-                    : theme.textSub
+                  currentPage === "dashboard" ? "bg-blue-50 text-blue-600" : theme.textSub
                 }`}
               >
                 홈
@@ -144,159 +124,127 @@ const Layout = ({
                   setIsSidebarOpen(false);
                 }}
                 className={`w-full text-left p-3 rounded ${
-                  currentPage === "mypage"
-                    ? "bg-blue-50 text-blue-600"
-                    : theme.textSub
+                  currentPage === "mypage" ? "bg-blue-50 text-blue-600" : theme.textSub
                 }`}
               >
                 마이페이지
               </button>
             </div>
 
-            {gameState && (
-              <div className="space-y-6">
-                <div>
-                  <h3
-                    className={`text-xs font-bold ${theme.textSub} uppercase tracking-wider mb-3 flex items-center gap-2`}
+            <div className="space-y-6">
+              <div>
+                <h3
+                  className={`text-xs font-bold ${theme.textSub} uppercase tracking-wider mb-3 flex items-center gap-2`}
+                >
+                  <PieChart size={14} className="text-blue-500" /> 자산 현황
+                </h3>
+                <div
+                  className={`${theme.cardBg} p-5 rounded-2xl border ${theme.cardBorder} shadow-sm`}
+                >
+                  <p className={`${theme.textSub} text-xs font-medium mb-1`}>
+                    총 평가 자산
+                  </p>
+                  <p
+                    className={`text-3xl font-black font-mono tracking-tight ${
+                      assets.profit >= 0 ? "text-red-500" : "text-blue-500"
+                    }`}
                   >
-                    <PieChart size={14} className="text-blue-500" /> 자산 현황
-                  </h3>
+                    {formatCurrency(assets.total)}
+                  </p>
                   <div
-                    className={`${theme.cardBg} p-5 rounded-2xl border ${theme.cardBorder} shadow-sm`}
+                    className={`flex justify-between text-sm mt-3 pt-3 border-t ${theme.cardBorder}`}
                   >
-                    <p className={`${theme.textSub} text-xs font-medium mb-1`}>
-                      총 평가 자산
-                    </p>
-                    <p
-                      className={`text-3xl font-black font-mono tracking-tight ${
+                    <span
+                      className={`${
                         assets.profit >= 0 ? "text-red-500" : "text-blue-500"
-                      }`}
+                      } font-bold ${isDarkMode ? "bg-slate-950/50" : "bg-slate-200/50"} px-2 py-1 rounded`}
                     >
-                      {formatCurrency(assets.total)}
-                    </p>
-                    <div
-                      className={`flex justify-between text-sm mt-3 pt-3 border-t ${theme.cardBorder}`}
-                    >
-                      <span
-                        className={`${
-                          assets.profit >= 0 ? "text-red-500" : "text-blue-500"
-                        } font-bold ${
-                          isDarkMode ? "bg-slate-950/50" : "bg-slate-200/50"
-                        } px-2 py-1 rounded`}
-                      >
-                        {assets.profit >= 0 ? "+" : ""}
-                        {assets.profitRate.toFixed(2)}%
-                      </span>
-                      <span
-                        className={`${theme.textSub} text-xs flex items-center`}
-                      >
-                        {assets.profit > 0 ? "+" : ""}
-                        {formatCurrency(assets.profit)}
-                      </span>
-                    </div>
+                      {assets.profit >= 0 ? "+" : ""}
+                      {assets.profitRate.toFixed(2)}%
+                    </span>
+                    <span className={`${theme.textSub} text-xs flex items-center`}>
+                      {assets.profit > 0 ? "+" : ""}
+                      {formatCurrency(assets.profit)}
+                    </span>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div
-                    className={`${theme.subCardBg} p-3 rounded-xl border ${theme.cardBorder}`}
-                  >
-                    <p
-                      className={`${theme.textSub} text-[10px] font-bold uppercase mb-1`}
-                    >
-                      보유 현금
-                    </p>
-                    <p
-                      className={`font-mono text-sm font-bold ${theme.textMain}`}
-                    >
-                      {formatCurrency(assets.cash)}
-                    </p>
-                  </div>
-                  <div
-                    className={`${theme.subCardBg} p-3 rounded-xl border ${theme.cardBorder}`}
-                  >
-                    <p
-                      className={`${theme.textSub} text-[10px] font-bold uppercase mb-1`}
-                    >
-                      주식 평가금
-                    </p>
-                    <p
-                      className={`font-mono text-sm font-bold ${theme.textMain}`}
-                    >
-                      {formatCurrency(assets.stockValue)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h3
-                    className={`text-xs font-bold ${theme.textSub} uppercase tracking-wider mb-3 flex items-center gap-2`}
-                  >
-                    <Briefcase size={14} className="text-indigo-500" /> 보유 종목
-                  </h3>
-                  {Object.keys(gameState.portfolio).length === 0 ? (
-                    <div
-                      className={`text-xs ${theme.textSub} text-center py-8 ${theme.subCardBg} rounded-xl border ${theme.cardBorder} border-dashed`}
-                    >
-                      보유 중인 주식이 없습니다.
-                    </div>
-                  ) : (
-                    <ul className="space-y-2">
-                      {Object.entries(gameState.portfolio).map(
-                        ([sid, data]) => {
-                          const stock = MARKET_DATA[sid];
-                          const currPrice =
-                            stock.prices[
-                              gameState.startDayIndex +
-                                gameState.currentDayOffset
-                            ];
-                          const ret =
-                            ((currPrice - data.avgPrice) / data.avgPrice) * 100;
-                          return (
-                            <li
-                              key={sid}
-                              className={`flex justify-between items-center text-sm ${theme.subCardBg} p-3 rounded-lg border ${theme.cardBorder} hover:border-blue-400 transition-colors`}
-                            >
-                              <div className="overflow-hidden">
-                                <span
-                                  className={`block truncate font-bold ${theme.textMain} text-sm`}
-                                >
-                                  {stock.name}
-                                </span>
-                                <span
-                                  className={`text-[10px] ${theme.textSub} font-mono font-bold tracking-wider`}
-                                >
-                                  {stock.ticker} · {data.quantity}주
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                <span
-                                  className={`block font-bold text-xs ${
-                                    ret >= 0 ? "text-red-500" : "text-blue-500"
-                                  }`}
-                                >
-                                  {ret.toFixed(1)}%
-                                </span>
-                                <span
-                                  className={`text-xs ${theme.textSub} font-mono`}
-                                >
-                                  {formatCurrency(currPrice * data.quantity)}
-                                </span>
-                              </div>
-                            </li>
-                          );
-                        }
-                      )}
-                    </ul>
-                  )}
                 </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className={`${theme.subCardBg} p-3 rounded-xl border ${theme.cardBorder}`}>
+                  <p
+                    className={`${theme.textSub} text-[10px] font-bold uppercase mb-1`}
+                  >
+                    보유 현금
+                  </p>
+                  <p className={`font-mono text-sm font-bold ${theme.textMain}`}>
+                    {formatCurrency(assets.cash)}
+                  </p>
+                </div>
+                <div className={`${theme.subCardBg} p-3 rounded-xl border ${theme.cardBorder}`}>
+                  <p
+                    className={`${theme.textSub} text-[10px] font-bold uppercase mb-1`}
+                  >
+                    주식 평가금
+                  </p>
+                  <p className={`font-mono text-sm font-bold ${theme.textMain}`}>
+                    {formatCurrency(assets.stockValue)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h3
+                  className={`text-xs font-bold ${theme.textSub} uppercase tracking-wider mb-3 flex items-center gap-2`}
+                >
+                  <Briefcase size={14} className="text-indigo-500" /> 보유 종목
+                </h3>
+                {holdings.length === 0 ? (
+                  <div
+                    className={`text-xs ${theme.textSub} text-center py-8 ${theme.subCardBg} rounded-xl border ${theme.cardBorder} border-dashed`}
+                  >
+                    보유 중인 주식이 없습니다.
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {holdings.map((h) => (
+                      <li
+                        key={h.stockId}
+                        className={`flex justify-between items-center text-sm ${theme.subCardBg} p-3 rounded-lg border ${theme.cardBorder}`}
+                      >
+                        <div className="overflow-hidden">
+                          <span
+                            className={`block truncate font-bold ${theme.textMain} text-sm`}
+                          >
+                            {h.stockName}
+                          </span>
+                          <span
+                            className={`text-[10px] ${theme.textSub} font-mono font-bold tracking-wider`}
+                          >
+                            {h.stockTag} · {h.quantity}주
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`block font-bold text-xs ${
+                              h.changeRate >= 0 ? "text-red-500" : "text-blue-500"
+                            }`}
+                          >
+                            {h.changeRate.toFixed(1)}%
+                          </span>
+                          <span className={`text-xs ${theme.textSub} font-mono`}>
+                            {formatCurrency(h.stockValuation)}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div
-            className={`p-4 border-t ${theme.sidebarBorder} ${theme.sidebarBg}`}
-          >
+          <div className={`p-4 border-t ${theme.sidebarBorder} ${theme.sidebarBg}`}>
             {gameState && !gameState.isGameOver && (
               <button
                 onClick={onNextDay}
@@ -306,10 +254,7 @@ const Layout = ({
                 {isProcessing ? (
                   <Loader2 className="animate-spin" size={20} />
                 ) : (
-                  <PlayCircle
-                    size={20}
-                    className="group-hover:scale-110 transition-transform"
-                  />
+                  <PlayCircle size={20} className="group-hover:scale-110 transition-transform" />
                 )}
                 <span className="text-lg">다음 날 진행</span>
               </button>
@@ -327,7 +272,6 @@ const Layout = ({
           </div>
         </aside>
 
-        {/* Mobile Toggle */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className={`md:hidden fixed bottom-6 right-6 ${theme.mobileToggleBg} ${theme.mobileToggleText} p-4 rounded-full shadow-xl z-50 hover:bg-blue-500 transition-colors`}
@@ -340,4 +284,3 @@ const Layout = ({
 };
 
 export default Layout;
-

@@ -1,15 +1,8 @@
 import React from "react";
 import { User, Activity, Heart } from "lucide-react";
-import { formatNumber, formatCurrency } from "../utils/formatters";
-import { MARKET_DATA } from "../utils/marketData";
+import { formatCurrency } from "../utils/formatters";
 
-const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
-  if (!gameState) return null;
-
-  const sortedTransactions = [...gameState.transactions].sort(
-    (a, b) => b.day - a.day || b.timestamp - a.timestamp
-  );
-
+const MyPage = ({ asset, holdings = [], transactions = [], interests = [], setViewStock, toggleWatchlist, isDarkMode }) => {
   const theme = isDarkMode
     ? {
         cardBg: "bg-slate-900",
@@ -41,17 +34,42 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
       };
 
   return (
-    <div className="p-4 md:p-10 max-w-[1600px] mx-auto pb-24 h-full flex flex-col">
+    <div className="p-4 md:p-10 max-w-[1600px] mx-auto pb-24 h-full flex flex-col gap-6">
       <h2
         className={`text-xl md:text-2xl font-bold ${
           isDarkMode ? "text-slate-100" : "text-slate-900"
-        } mb-6 md:mb-8 flex items-center gap-2`}
+        } flex items-center gap-2`}
       >
         <User className="text-purple-500" /> 마이 페이지
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-stretch flex-1 overflow-hidden">
-        {/* Transaction History (Left) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className={`${theme.cardBg} rounded-2xl border ${theme.cardBorder} p-5 space-y-2`}>
+          <p className={`${theme.textSub} text-xs font-medium`}>총 평가 자산</p>
+          <p className="text-3xl font-black font-mono text-blue-400">
+            {formatCurrency(asset?.totalAmount || 0)}
+          </p>
+          <p className={`text-sm font-bold ${asset?.creditChangeRate >= 0 ? "text-red-500" : "text-blue-500"}`}>
+            {asset?.creditChangeRate >= 0 ? "+" : ""}
+            {(asset?.creditChangeRate ?? 0).toFixed(2)}% ({asset?.creditChangeAmount >= 0 ? "+" : ""}
+            {formatCurrency(asset?.creditChangeAmount || 0)})
+          </p>
+        </div>
+        <div className={`${theme.cardBg} rounded-2xl border ${theme.cardBorder} p-5 space-y-2`}>
+          <p className={`${theme.textSub} text-xs font-medium`}>보유 현금</p>
+          <p className={`text-2xl font-black font-mono ${theme.textMain}`}>
+            {formatCurrency(asset?.userCredit || 0)}
+          </p>
+        </div>
+        <div className={`${theme.cardBg} rounded-2xl border ${theme.cardBorder} p-5 space-y-2`}>
+          <p className={`${theme.textSub} text-xs font-medium`}>주식 평가금</p>
+          <p className={`text-2xl font-black font-mono ${theme.textMain}`}>
+            {formatCurrency(asset?.stockValuation || 0)}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div
           className={`${theme.cardBg} rounded-2xl border ${theme.cardBorder} h-full shadow-lg flex flex-col overflow-hidden`}
         >
@@ -67,35 +85,25 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                 className={`${theme.tableHeader} ${theme.tableHeaderBg} uppercase text-[10px] md:text-[11px] font-bold tracking-wider sticky top-0 z-10`}
               >
                 <tr>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     날짜
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     종목
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     유형
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     수량
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-b ${theme.tableCellBorder}`}>
                     총액
                   </th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${theme.divider}`}>
-                {sortedTransactions.length === 0 ? (
+                {transactions.length === 0 ? (
                   <tr>
                     <td
                       colSpan="5"
@@ -105,33 +113,20 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                     </td>
                   </tr>
                 ) : (
-                  sortedTransactions.map((tx, idx) => (
-                    <tr
-                      key={idx}
-                      className={`${theme.tableRowHover} transition-colors`}
-                    >
-                      <td
-                        className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textSub} whitespace-nowrap border-r ${theme.tableCellBorder}`}
-                      >
-                        DAY {tx.day}
+                  transactions.map((tx, idx) => (
+                    <tr key={`${tx.date}-${idx}`} className={`${theme.tableRowHover} transition-colors`}>
+                      <td className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textSub} whitespace-nowrap border-r ${theme.tableCellBorder}`}>
+                        {tx.date}
                       </td>
-                      <td
-                        className={`px-2 md:px-4 py-3 md:py-4 border-r ${theme.tableCellBorder}`}
-                      >
-                        <span
-                          className={`font-bold ${theme.textMain} block whitespace-nowrap`}
-                        >
-                          {MARKET_DATA[tx.stockId].name}
+                      <td className={`px-2 md:px-4 py-3 md:py-4 border-r ${theme.tableCellBorder}`}>
+                        <span className={`font-bold ${theme.textMain} block whitespace-nowrap`}>
+                          {tx.stockName}
                         </span>
-                        <span
-                          className={`text-[10px] ${theme.textSub} font-bold tracking-wider hidden sm:inline`}
-                        >
-                          {MARKET_DATA[tx.stockId].ticker}
+                        <span className={`text-[10px] ${theme.textSub} font-bold tracking-wider hidden sm:inline`}>
+                          {tx.stockTag}
                         </span>
                       </td>
-                      <td
-                        className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder}`}
-                      >
+                      <td className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder}`}>
                         <span
                           className={`inline-block px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] md:text-xs font-bold border ${
                             tx.type === "BUY"
@@ -142,15 +137,11 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                           {tx.type === "BUY" ? "매수" : "매도"}
                         </span>
                       </td>
-                      <td
-                        className={`px-2 md:px-4 py-3 md:py-4 font-mono ${theme.textSub} whitespace-nowrap border-r ${theme.tableCellBorder}`}
-                      >
+                      <td className={`px-2 md:px-4 py-3 md:py-4 font-mono ${theme.textSub} whitespace-nowrap border-r ${theme.tableCellBorder}`}>
                         {tx.quantity}
                       </td>
-                      <td
-                        className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textMain} whitespace-nowrap`}
-                      >
-                        {formatCurrency(tx.price * tx.quantity)}
+                      <td className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textMain} whitespace-nowrap`}>
+                        {formatCurrency(tx.totalAmount)}
                       </td>
                     </tr>
                   ))
@@ -160,7 +151,6 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
           </div>
         </div>
 
-        {/* Watchlist (Right) */}
         <div
           className={`${theme.cardBg} rounded-2xl border ${theme.cardBorder} overflow-hidden h-full shadow-lg flex flex-col`}
         >
@@ -169,7 +159,7 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
           >
             <Heart size={20} className="text-pink-500" />
             <h3 className={`font-bold text-lg ${theme.textMain}`}>
-              관심 종목 ({gameState.watchlist.length})
+              관심 종목 ({interests.length})
             </h3>
           </div>
           <div className={`overflow-auto flex-1 scrollbar-hide`}>
@@ -178,80 +168,50 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                 className={`${theme.tableHeader} ${theme.tableHeaderBg} uppercase text-[10px] md:text-[11px] font-bold tracking-wider sticky top-0 z-10`}
               >
                 <tr>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     종목
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     현재가
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-r ${theme.tableCellBorder} border-b ${theme.tableCellBorder}`}>
                     등락률
                   </th>
-                  <th
-                    className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-b ${theme.tableCellBorder}`}
-                  >
+                  <th className={`px-2 md:px-4 py-3 md:py-4 whitespace-nowrap border-b ${theme.tableCellBorder}`}>
                     관리
                   </th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${theme.divider}`}>
-                {gameState.watchlist.length === 0 ? (
+                {interests.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="4"
-                      className={`px-6 py-12 text-center ${theme.textSub}`}
-                    >
+                    <td colSpan="4" className={`px-6 py-12 text-center ${theme.textSub}`}>
                       관심 종목이 없습니다.
                     </td>
                   </tr>
                 ) : (
-                  gameState.watchlist.map((sid) => {
-                    const stock = MARKET_DATA[sid];
-                    const currentIdx =
-                      gameState.startDayIndex + gameState.currentDayOffset;
-                    const price = stock.prices[currentIdx];
-                    const change =
-                      ((price - stock.prices[currentIdx - 1]) /
-                        stock.prices[currentIdx - 1]) *
-                      100;
+                  interests.map((item) => {
+                    const change = item.changeRate ?? 0;
                     return (
                       <tr
-                        key={sid}
+                        key={item.stockId}
                         className={`${theme.tableRowHover} transition-colors group cursor-pointer`}
-                        onClick={() => setViewStock(sid)}
+                        onClick={() => setViewStock(item.stockId)}
                       >
-                        <td
-                          className={`px-2 md:px-4 py-3 md:py-4 border-r ${theme.tableCellBorder}`}
-                        >
+                        <td className={`px-2 md:px-4 py-3 md:py-4 border-r ${theme.tableCellBorder}`}>
                           <span
                             className={`font-bold ${theme.textMain} block whitespace-nowrap group-hover:text-blue-500 transition-colors`}
                           >
-                            {stock.name}
+                            {item.stockName}
                           </span>
-                          <span
-                            className={`text-[10px] ${theme.textSub} font-bold tracking-wider hidden sm:inline`}
-                          >
-                            {stock.ticker}
+                          <span className={`text-[10px] ${theme.textSub} font-bold tracking-wider hidden sm:inline`}>
+                            {item.stockTag}
                           </span>
                         </td>
-                        <td
-                          className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textMain} border-r ${theme.tableCellBorder} whitespace-nowrap`}
-                        >
-                          {formatCurrency(price)}
+                        <td className={`px-2 md:px-4 py-3 md:py-4 font-mono font-bold ${theme.textMain} border-r ${theme.tableCellBorder} whitespace-nowrap`}>
+                          {formatCurrency(item.currentPrice)}
                         </td>
-                        <td
-                          className={`px-2 md:px-4 py-3 md:py-4 font-bold border-r ${
-                            theme.tableCellBorder
-                          } whitespace-nowrap ${
-                            change >= 0 ? "text-red-500" : "text-blue-500"
-                          }`}
-                        >
+                        <td className={`px-2 md:px-4 py-3 md:py-4 font-bold border-r ${theme.tableCellBorder} whitespace-nowrap ${change >= 0 ? "text-red-500" : "text-blue-500"}`}>
                           {change >= 0 ? "+" : ""}
                           {change.toFixed(2)}%
                         </td>
@@ -259,7 +219,7 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleWatchlist(sid);
+                              toggleWatchlist(item.stockId);
                             }}
                             className={`p-2 rounded-full text-pink-500 bg-pink-500/10 hover:bg-pink-500/20 hover:text-pink-400 transition-all border border-pink-500/20`}
                             title="관심 종목 해제"
@@ -276,9 +236,40 @@ const MyPage = ({ gameState, setViewStock, toggleWatchlist, isDarkMode }) => {
           </div>
         </div>
       </div>
+
+      <div className={`${theme.cardBg} rounded-2xl border ${theme.cardBorder} p-5`}>
+        <h3 className={`font-bold text-lg mb-3 ${theme.textMain}`}>보유 종목</h3>
+        {holdings.length === 0 ? (
+          <p className={theme.textSub}>보유 중인 종목이 없습니다.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {holdings.map((h) => (
+              <div
+                key={h.stockId}
+                className={`${theme.subCard} p-4 rounded-xl border ${theme.cardBorder} hover:border-blue-400 transition-colors cursor-pointer`}
+                onClick={() => setViewStock(h.stockId)}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className={`font-bold ${theme.textMain}`}>{h.stockName}</p>
+                    <p className={`text-[10px] ${theme.textSub} font-bold tracking-wider`}>{h.stockTag}</p>
+                  </div>
+                  <span className={`text-sm font-bold ${h.changeRate >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                    {h.changeRate >= 0 ? "+" : ""}
+                    {h.changeRate.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="mt-2 text-sm">
+                  <p className={theme.textSub}>보유 수량: {h.quantity}주</p>
+                  <p className={theme.textSub}>평가 금액: {formatCurrency(h.stockValuation)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 export default MyPage;
-

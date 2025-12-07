@@ -11,8 +11,10 @@ import {
   UserCog,
   Sparkles,
   Menu,
+  Loader2,
 } from "lucide-react";
-import { SettingsModal } from "./Modals";
+import { SettingsModal, ChangePasswordModal } from "./Modals";
+import { changePasswordApi } from "../api/api";
 
 const Header = ({
   currentPage,
@@ -26,6 +28,8 @@ const Header = ({
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isChangingPw, setIsChangingPw] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -51,8 +55,7 @@ const Header = ({
         dayBorder: "border-slate-600",
         dayText: "text-slate-600",
         iconColor: "text-slate-400 hover:text-white",
-        profileBg:
-          "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700",
+        profileBg: "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700",
         dropdownBg: "bg-slate-800 border-slate-700",
         dropdownText: "text-slate-200",
         dropdownHover: "hover:bg-slate-700",
@@ -69,17 +72,24 @@ const Header = ({
         dayBorder: "border-slate-300",
         dayText: "text-slate-400",
         iconColor: "text-slate-500 hover:text-slate-900",
-        profileBg:
-          "bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200",
+        profileBg: "bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200",
         dropdownBg: "bg-white border-slate-200",
         dropdownText: "text-slate-800",
         dropdownHover: "hover:bg-slate-50",
       };
 
-  const handleEditPassword = () => {
+  const handleOpenPasswordModal = () => {
     setIsSettingsOpen(false);
-    const newPw = prompt("새로운 비밀번호를 입력하세요:");
-    if (newPw) alert("비밀번호가 변경되었습니다.");
+    setIsPasswordModalOpen(true);
+  };
+
+  const handleChangePassword = async (payload) => {
+    setIsChangingPw(true);
+    try {
+      await changePasswordApi(payload);
+    } finally {
+      setIsChangingPw(false);
+    }
   };
 
   return (
@@ -87,7 +97,6 @@ const Header = ({
       <header
         className={`fixed top-0 left-0 w-full h-16 ${theme.headerBg} border-b ${theme.borderColor} z-50 flex items-center justify-between px-4 md:px-6 shadow-sm transition-colors duration-300`}
       >
-        {/* Left: Logo & Mobile Menu */}
         <div className="flex items-center gap-2 md:pl-6">
           <button
             onClick={toggleSidebar}
@@ -106,12 +115,11 @@ const Header = ({
             <span
               className={`hidden lg:flex text-[10px] font-bold ${theme.textColor} items-center gap-1 border-l ${theme.borderColor} pl-3 ml-2 uppercase tracking-widest`}
             >
-              <Sparkles size={10} className="text-yellow-500" /> AI Trading
+              <Sparkles size={10} className="text-yellow-500" /> API Ready
             </span>
           </div>
         </div>
 
-        {/* Center: Navigation (Desktop) */}
         <nav
           className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 ${theme.navBg} p-1.5 rounded-full border ${theme.navBorder} backdrop-blur-sm`}
         >
@@ -134,9 +142,7 @@ const Header = ({
           </button>
         </nav>
 
-        {/* Right: Day Status & Profile */}
         <div className="flex items-center gap-2 md:gap-3 pr-1 md:pr-2">
-          {/* Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
             className={`p-2 rounded-full transition-colors ${
@@ -179,21 +185,16 @@ const Header = ({
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500 font-black font-mono text-lg md:text-xl tracking-tight">
                     {gameState.currentDayOffset + 1}
                   </span>
-                  <span
-                    className={`${theme.dayText} text-xs md:text-sm font-bold`}
-                  >
-                    / 20
+                  <span className={`${theme.dayText} text-xs md:text-sm font-bold`}>
+                    / {gameState.maxGameDays}
                   </span>
                 </div>
               </div>
             </>
           )}
 
-          <div
-            className={`h-6 md:h-8 w-px ${theme.borderColor} mx-1 hidden sm:block`}
-          ></div>
+          <div className={`h-6 md:h-8 w-px ${theme.borderColor} mx-1 hidden sm:block`}></div>
 
-          {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -204,10 +205,7 @@ const Header = ({
               >
                 <User size={14} />
               </div>
-              <ChevronDown
-                size={14}
-                className="opacity-70 mr-1 hidden sm:block"
-              />
+              <ChevronDown size={14} className="opacity-70 mr-1 hidden sm:block" />
             </button>
 
             {isProfileOpen && (
@@ -218,12 +216,10 @@ const Header = ({
                   <p
                     className={`text-xs font-bold ${theme.textColor} uppercase tracking-wider mb-0.5`}
                   >
-                    Signed in as
+                    Signed in
                   </p>
-                  <p
-                    className={`text-sm font-bold ${theme.dropdownText} truncate`}
-                  >
-                    User #1111
+                  <p className={`text-sm font-bold ${theme.dropdownText} truncate`}>
+                    사용자
                   </p>
                 </div>
 
@@ -256,12 +252,20 @@ const Header = ({
         </div>
       </header>
 
-      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onEditPw={handleEditPassword}
+        onEditPw={handleOpenPasswordModal}
         isDarkMode={isDarkMode}
+        isChangingPw={isChangingPw}
+      />
+
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSubmit={handleChangePassword}
+        isDarkMode={isDarkMode}
+        isLoading={isChangingPw}
       />
     </>
   );
