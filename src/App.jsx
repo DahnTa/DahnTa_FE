@@ -63,21 +63,30 @@ export default function App() {
 
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
-  const bootstrap = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([loadStocks(), loadUserData()]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!isLoggedIn || isGuest) {
       setLoading(false);
       return;
     }
-    bootstrap();
+
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        // 15초 카운트다운 대기
+        await waitWithCountdown(15, "서버에서 데이터 준비 중...");
+        if (cancelled) return;
+        setLoadingMessage("시장 데이터 불러오는 중...");
+        await bootstrapWithRetry(3, 3000);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    run();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedIn, isGuest]);
 
   const loadStocks = async () => {
@@ -163,18 +172,10 @@ export default function App() {
     }
     setIsLoggedIn(true);
     setGameState(createDefaultGameState());
-    // 로그인 성공 이후에만 전역 로딩 스피너를 잠깐 사용한다.
     setLoading(true);
     setLoadingMessage("게임 세션 시작 중...");
-    try {
-      await startGame();
-      // 백엔드 데이터 준비 시간을 위해 15초 카운트다운 대기
-      await waitWithCountdown(15, "서버에서 데이터 준비 중...");
-      setLoadingMessage("시장 데이터 불러오는 중...");
-      await bootstrapWithRetry(3, 3000);
-    } finally {
-      setLoading(false);
-    }
+    // 게임 세션 시작은 바로 수행하되, 데이터 로드는 useEffect에서 15초 대기 후 진행
+    await startGame();
   };
 
   const handleGuestLogin = async () => {
