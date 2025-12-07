@@ -87,6 +87,8 @@ export default function App() {
         return;
       }
       const list = await fetchStockList();
+      console.log("[loadStocks] 받아온 데이터:", list);
+      console.log("[loadStocks] 데이터 개수:", list?.length || 0);
       setStocks(list);
     } catch (error) {
       console.error("주식 리스트 로드 실패", error);
