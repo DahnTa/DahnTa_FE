@@ -137,12 +137,13 @@ export default function App() {
       try {
         setLoadingMessage(`시장 데이터 불러오는 중... (${attempt}/${maxRetries})`);
         console.log(`[Bootstrap] 시도 ${attempt}/${maxRetries}...`);
-        await Promise.all([loadStocks(), loadUserData()]);
+        // 순서 보장: 주식 리스트 이후 사용자 데이터
+        await loadStocks();
+        await loadUserData();
         console.log(`[Bootstrap] 성공!`);
         setLoadingMessage("준비 완료!");
         return true; // 성공
       } catch (error) {
-        console.warn(`[Bootstrap] 시도 ${attempt} 실패:`, error.message);
         if (attempt < maxRetries) {
           setLoadingMessage(`데이터 준비 중... 잠시만 기다려주세요 (${attempt}/${maxRetries})`);
           console.log(`[Bootstrap] ${delayMs}ms 후 재시도...`);
@@ -170,12 +171,13 @@ export default function App() {
     if (!res?.accessToken || !res?.refreshToken) {
       throw new Error("로그인 응답에 토큰이 없습니다.");
     }
-    setIsLoggedIn(true);
-    setGameState(createDefaultGameState());
     setLoading(true);
     setLoadingMessage("게임 세션 시작 중...");
-    // 게임 세션 시작은 바로 수행하되, 데이터 로드는 useEffect에서 15초 대기 후 진행
+    // 토큰 받은 직후 게임 세션 시작
     await startGame();
+    // 게임 시작이 끝난 뒤 로그인 상태로 전환 → useEffect에서 15초 대기 후 /api/stock/ 호출
+    setIsLoggedIn(true);
+    setGameState(createDefaultGameState());
   };
 
   const handleGuestLogin = async () => {

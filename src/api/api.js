@@ -18,6 +18,7 @@ export const changePasswordApi = withAuth(async (payload) =>
 );
 
 // Stock
+
 export const fetchStockList = withAuth(async () => {
   const res = await apiRequest("/api/stock/");
   return (res?.dashBoard || []).map(normalizeStockSummary);
@@ -91,6 +92,7 @@ export const fetchInterest = withAuth(async () => {
   const res = await apiRequest("/api/user/interest");
   return (res?.interests || []).map(normalizeInterest);
 });
+
 
 export const likeInterest = withAuth(async (id) =>
   apiRequest(`/api/user/interest/${id}/like`, { method: "POST" })
