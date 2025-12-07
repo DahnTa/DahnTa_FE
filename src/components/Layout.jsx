@@ -209,7 +209,7 @@ const Layout = ({
                   <ul className="space-y-2">
                     {holdings.map((h) => (
                       <li
-                        key={h.stockId}
+                        key={h.stockTag}
                         className={`flex justify-between items-center text-sm ${theme.subCardBg} p-3 rounded-lg border ${theme.cardBorder}`}
                       >
                         <div className="overflow-hidden">

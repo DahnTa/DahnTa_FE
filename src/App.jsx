@@ -147,6 +147,14 @@ export default function App() {
     }
   };
 
+  // 카운트다운과 함께 대기
+  const waitWithCountdown = async (totalSeconds, messagePrefix) => {
+    for (let remaining = totalSeconds; remaining > 0; remaining--) {
+      setLoadingMessage(`${messagePrefix} (${remaining}초 남음)`);
+      await delay(1000);
+    }
+  };
+
   const handleLogin = async (payload) => {
     // 로그인 실패 시에는 전역 로딩을 켜지 않아 에러 메시지가 가려지지 않도록 한다.
     const res = await loginService(payload);
@@ -160,10 +168,10 @@ export default function App() {
     setLoadingMessage("게임 세션 시작 중...");
     try {
       await startGame();
-      setLoadingMessage("서버에서 데이터 준비 중... (약 10초 소요)");
-      // 백엔드 데이터 준비 시간을 위해 10초 대기 후 재시도 로직으로 데이터 로드
-      await delay(10000);
-      await bootstrapWithRetry(3, 2000);
+      // 백엔드 데이터 준비 시간을 위해 15초 카운트다운 대기
+      await waitWithCountdown(15, "서버에서 데이터 준비 중...");
+      setLoadingMessage("시장 데이터 불러오는 중...");
+      await bootstrapWithRetry(3, 3000);
     } finally {
       setLoading(false);
     }
@@ -408,6 +416,7 @@ export default function App() {
           holdings={holdings}
           transactions={transactions}
           interests={interests}
+          stocks={stocks}
           setViewStock={setViewStock}
           toggleWatchlist={toggleWatchlist}
           isDarkMode={isDarkMode}

@@ -2,7 +2,12 @@ import React from "react";
 import { User, Activity, Heart } from "lucide-react";
 import { formatCurrency } from "../utils/formatters";
 
-const MyPage = ({ asset, holdings = [], transactions = [], interests = [], setViewStock, toggleWatchlist, isDarkMode }) => {
+const MyPage = ({ asset, holdings = [], transactions = [], interests = [], stocks = [], setViewStock, toggleWatchlist, isDarkMode }) => {
+  // stockTag로 실제 주식 id를 찾는 헬퍼 함수
+  const findStockIdByTag = (stockTag) => {
+    const stock = stocks.find((s) => s.stockTag === stockTag);
+    return stock?.id ?? stockTag; // 못 찾으면 stockTag 그대로 사용
+  };
   const theme = isDarkMode
     ? {
         cardBg: "bg-slate-900",
@@ -245,9 +250,9 @@ const MyPage = ({ asset, holdings = [], transactions = [], interests = [], setVi
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {holdings.map((h) => (
               <div
-                key={h.stockId}
+                key={h.stockTag}
                 className={`${theme.subCard} p-4 rounded-xl border ${theme.cardBorder} hover:border-blue-400 transition-colors cursor-pointer`}
-                onClick={() => setViewStock(h.stockId)}
+                onClick={() => setViewStock(findStockIdByTag(h.stockTag))}
               >
                 <div className="flex justify-between items-center">
                   <div>
