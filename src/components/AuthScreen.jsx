@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   CheckCircle,
   Wifi,
+  AlertTriangle,
+  ShieldAlert,
 } from "lucide-react";
 import { signupApi } from "../api/api";
 import ApiTestPanel from "./ApiTestPanel";
@@ -19,6 +21,7 @@ const AuthScreen = ({ onLogin, onGuestLogin }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showApiTest, setShowApiTest] = useState(false);
+  const [showAiDisclaimer, setShowAiDisclaimer] = useState(true);
 
   // 로그인 폼
   const [loginId, setLoginId] = useState("");
@@ -357,6 +360,54 @@ const AuthScreen = ({ onLogin, onGuestLogin }) => {
 
       {/* API Test Panel */}
       {showApiTest && <ApiTestPanel onClose={() => setShowApiTest(false)} />}
+
+      {/* AI 주의문구 팝업 */}
+      {showAiDisclaimer && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-amber-500/30 rounded-2xl w-full max-w-md p-6 shadow-2xl shadow-amber-900/20 animate-in fade-in zoom-in duration-300">
+            {/* 헤더 */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-3 bg-amber-500/20 rounded-xl">
+                <ShieldAlert size={28} className="text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">AI 투자 주의사항</h3>
+                <p className="text-amber-400/80 text-xs font-medium">Important Notice</p>
+              </div>
+            </div>
+
+            {/* 본문 */}
+            <div className="space-y-4 mb-6">
+              <div className="flex gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <AlertTriangle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  본 AI가 제공하는 분석·예측 및 투자 의견은 <span className="text-amber-400 font-semibold">참고용 정보</span>일 뿐이며, 실제 투자 판단의 책임은 <span className="text-white font-semibold">투자자 본인</span>에게 있습니다.
+                </p>
+              </div>
+              
+              <div className="flex gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <AlertTriangle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  AI 모델의 한계로 인해 <span className="text-amber-400 font-semibold">오류·불완전한 정보</span>가 포함될 수 있으며, 이를 단순 신뢰한 의사결정으로 발생하는 손실에 대해 <span className="text-white font-semibold">서비스 제공자는 책임을 지지 않습니다.</span>
+                </p>
+              </div>
+            </div>
+
+            {/* 동의 버튼 */}
+            <button
+              onClick={() => setShowAiDisclaimer(false)}
+              className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold rounded-xl text-lg shadow-lg shadow-amber-900/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+            >
+              <CheckCircle size={20} />
+              동의합니다
+            </button>
+
+            <p className="text-slate-500 text-xs text-center mt-4">
+              위 내용을 확인하고 동의해야 서비스를 이용할 수 있습니다.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -27,6 +27,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [selectedStockId, setSelectedStockId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("초기화 중...");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
@@ -116,6 +117,34 @@ export default function App() {
     }
   };
 
+  // 딜레이 유틸
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // 재시도 로직이 포함된 bootstrap
+  const bootstrapWithRetry = async (maxRetries = 3, delayMs = 2000) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        setLoadingMessage(`시장 데이터 불러오는 중... (${attempt}/${maxRetries})`);
+        console.log(`[Bootstrap] 시도 ${attempt}/${maxRetries}...`);
+        await Promise.all([loadStocks(), loadUserData()]);
+        console.log(`[Bootstrap] 성공!`);
+        setLoadingMessage("준비 완료!");
+        return true; // 성공
+      } catch (error) {
+        console.warn(`[Bootstrap] 시도 ${attempt} 실패:`, error.message);
+        if (attempt < maxRetries) {
+          setLoadingMessage(`데이터 준비 중... 잠시만 기다려주세요 (${attempt}/${maxRetries})`);
+          console.log(`[Bootstrap] ${delayMs}ms 후 재시도...`);
+          await delay(delayMs);
+        } else {
+          console.error(`[Bootstrap] 모든 시도 실패`);
+          setLoadingMessage("데이터 로드 실패. 새로고침 해주세요.");
+          return false;
+        }
+      }
+    }
+  };
+
   const handleLogin = async (payload) => {
     // 로그인 실패 시에는 전역 로딩을 켜지 않아 에러 메시지가 가려지지 않도록 한다.
     const res = await loginService(payload);
@@ -126,9 +155,13 @@ export default function App() {
     setGameState(createDefaultGameState());
     // 로그인 성공 이후에만 전역 로딩 스피너를 잠깐 사용한다.
     setLoading(true);
+    setLoadingMessage("게임 세션 시작 중...");
     try {
       await startGame();
-      await bootstrap();
+      setLoadingMessage("서버에서 데이터 준비 중...");
+      // 백엔드 데이터 준비 시간을 위해 잠시 대기 후 재시도 로직으로 데이터 로드
+      await delay(1500);
+      await bootstrapWithRetry(3, 2000);
     } finally {
       setLoading(false);
     }
@@ -272,8 +305,55 @@ export default function App() {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-        초기화 중...
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center relative overflow-hidden">
+        {/* 배경 그라데이션 효과 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-slate-950 to-indigo-900/20" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        
+        {/* 로딩 컨텐츠 */}
+        <div className="z-10 flex flex-col items-center gap-8">
+          {/* 로고 */}
+          <h1 className="text-5xl font-black tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+            StockSim
+          </h1>
+          
+          {/* 스피너 */}
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-indigo-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+          </div>
+          
+          {/* 로딩 메시지 */}
+          <div className="text-center">
+            <p className="text-lg text-slate-300 font-medium animate-pulse">
+              {loadingMessage}
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              잠시만 기다려주세요
+            </p>
+          </div>
+          
+          {/* 프로그레스 바 (무한 애니메이션) */}
+          <div className="w-64 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 rounded-full animate-loading-bar"
+              style={{
+                width: '40%',
+                animation: 'loading-bar 1.5s ease-in-out infinite',
+              }}
+            />
+          </div>
+        </div>
+        
+        {/* CSS 애니메이션 */}
+        <style>{`
+          @keyframes loading-bar {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(150%); }
+            100% { transform: translateX(-100%); }
+          }
+        `}</style>
       </div>
     );
 
