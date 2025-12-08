@@ -15,6 +15,8 @@ import {
   nextGameDay,
   finishGame,
   fetchGameResult,
+  likeInterest,
+  dislikeInterest,
 } from "./api/api";
 import { createDefaultGameState } from "./api/apiTypes";
 import { login as loginService, logout as logoutService } from "./services/authService";
@@ -125,16 +127,17 @@ export default function App() {
         setInterests([]);
         return;
       }
-      // interest 호출은 백엔드 500 발생으로 임시 제외
-      const [assetRes, holdingsRes, txRes] = await Promise.all([
+      // interest 호출 복구
+      const [assetRes, holdingsRes, txRes, interestsRes] = await Promise.all([
         fetchAsset(),
         fetchHoldings(),
         fetchTransactions(),
+        fetchInterest(),
       ]);
       setAsset(assetRes);
       setHoldings(holdingsRes);
       setTransactions(txRes);
-      setInterests([]); // 임시 비움
+      setInterests(interestsRes || []);
     } catch (error) {
       console.error("사용자 데이터 로드 실패", error);
     }
@@ -306,9 +309,9 @@ export default function App() {
       }
       const isWatching = interests.some((item) => item.stockId === stockId);
       if (isWatching) {
-        await import("./api/api").then((m) => m.dislikeInterest(stockId));
+        await dislikeInterest(stockId);
       } else {
-        await import("./api/api").then((m) => m.likeInterest(stockId));
+        await likeInterest(stockId);
       }
       await loadUserData();
     } catch (error) {
