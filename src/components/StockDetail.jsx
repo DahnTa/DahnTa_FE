@@ -240,15 +240,6 @@ const StockDetail = ({
     setInfoIndex((prev) => (prev + 1) % infoItems.length);
   };
 
-  // 자동 재생 (4초 간격)
-  useEffect(() => {
-    if (infoItems.length <= 1) return undefined;
-    const id = setInterval(() => {
-      startInfoAnimation();
-      setInfoIndex((prev) => (prev + 1) % infoItems.length);
-    }, 10000);
-    return () => clearInterval(id);
-  }, [infoItems.length]);
 
   useEffect(() => {
     return () => {
@@ -327,7 +318,7 @@ const StockDetail = ({
                 </div>
               </div>
 
-              <div className="flex-1 w-full min-h-[300px] md:min-h-[350px]">
+              <div className="w-full h-[300px] md:h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid
@@ -344,6 +335,7 @@ const StockDetail = ({
                     />
                     <YAxis
                       domain={["auto", "auto"]}
+                      padding={{ top: 20, bottom: 20 }}
                       stroke={theme.chartText}
                       width={60}
                       tickFormatter={(val) => val.toLocaleString()}

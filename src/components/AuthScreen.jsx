@@ -21,7 +21,8 @@ const AuthScreen = ({ onLogin, onGuestLogin }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showApiTest, setShowApiTest] = useState(false);
-  const [showAiDisclaimer, setShowAiDisclaimer] = useState(true);
+  // 앱 전역에서 주의문구를 처리하므로 기본값을 false로 둔다.
+  const [showAiDisclaimer, setShowAiDisclaimer] = useState(false);
 
   // 로그인 폼
   const [loginId, setLoginId] = useState("");
