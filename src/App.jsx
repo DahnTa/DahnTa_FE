@@ -38,6 +38,7 @@ export default function App() {
   const [interests, setInterests] = useState([]);
   const [gameState, setGameState] = useState(createDefaultGameState());
   const [gameResult, setGameResult] = useState(null);
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const guestStocks = STOCK_INFO.map((s, idx) => {
     const base = s.basePrice || 100;
@@ -88,6 +89,17 @@ export default function App() {
       cancelled = true;
     };
   }, [isLoggedIn, isGuest]);
+
+  // AI 주의문구 동의 상태 로드
+  useEffect(() => {
+    const saved = localStorage.getItem("stocksim_ai_disclaimer_accepted");
+    setConsentAccepted(saved === "true");
+  }, []);
+
+  const handleAcceptConsent = () => {
+    localStorage.setItem("stocksim_ai_disclaimer_accepted", "true");
+    setConsentAccepted(true);
+  };
 
   const loadStocks = async () => {
     try {
@@ -369,6 +381,45 @@ export default function App() {
         `}</style>
       </div>
     );
+
+  // AI 주의문구 동의 전이면 모든 화면보다 우선하여 표시
+  if (!consentAccepted) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="z-10 bg-gradient-to-br from-slate-900 to-slate-800 border border-amber-500/30 rounded-2xl w-full max-w-md p-6 shadow-2xl shadow-amber-900/20">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-amber-500/20 rounded-xl">
+              <span className="text-amber-400 font-bold">!</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">AI 투자 주의사항</h3>
+              <p className="text-amber-400/80 text-xs font-medium">Important Notice</p>
+            </div>
+          </div>
+          <div className="space-y-4 mb-6 text-sm leading-relaxed text-slate-300">
+            <p>
+              본 AI가 제공하는 분석·예측 및 투자 의견은 <span className="text-amber-400 font-semibold">참고용 정보</span>일 뿐이며,
+              실제 투자 판단의 책임은 <span className="text-white font-semibold">투자자 본인</span>에게 있습니다.
+            </p>
+            <p>
+              AI 모델의 한계로 인해 <span className="text-amber-400 font-semibold">오류·불완전한 정보</span>가 포함될 수 있으며,
+              이를 단순 신뢰한 의사결정으로 발생하는 손실에 대해 <span className="text-white font-semibold">서비스 제공자는 책임을 지지 않습니다.</span>
+            </p>
+          </div>
+          <button
+            onClick={handleAcceptConsent}
+            className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold rounded-xl text-lg shadow-lg shadow-amber-900/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            동의합니다
+          </button>
+          <p className="text-slate-500 text-xs text-center mt-4">
+            위 내용을 확인하고 동의해야 서비스를 이용할 수 있습니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <AuthScreen onLogin={handleLogin} onGuestLogin={handleGuestLogin} />;

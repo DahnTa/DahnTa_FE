@@ -151,12 +151,14 @@ const StockDetail = ({
 
   // 백엔드 응답: [{ marketPrice: number }] 또는 [number] 형식 모두 지원
   const rawMarketPrices = detail?.marketPrices || [];
-  const marketPrices = rawMarketPrices.map((item) =>
-    typeof item === "object" ? item.marketPrice : item
-  );
+  // 객체/숫자 대응 + 숫자 강제 변환 + NaN 필터링
+  const marketPrices = rawMarketPrices
+    .map((item) => (typeof item === "object" ? item?.marketPrice : item))
+    .map((v) => Number(v))
+    .filter((v) => Number.isFinite(v));
   // 그래프용 최소 포인트 보장
   const safeMarketPrices =
-    marketPrices.length > 0 ? marketPrices : [detail?.currentPrice || 0];
+    marketPrices.length > 0 ? marketPrices : [Number(detail?.currentPrice) || 0];
   const historyDays = 10;
   const chartData = safeMarketPrices.map((price, idx) => {
     const relative = idx - historyDays + 1;
