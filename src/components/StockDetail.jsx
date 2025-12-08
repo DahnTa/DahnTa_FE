@@ -154,8 +154,11 @@ const StockDetail = ({
   const marketPrices = rawMarketPrices.map((item) =>
     typeof item === "object" ? item.marketPrice : item
   );
+  // 그래프용 최소 포인트 보장
+  const safeMarketPrices =
+    marketPrices.length > 0 ? marketPrices : [detail?.currentPrice || 0];
   const historyDays = 10;
-  const chartData = marketPrices.map((price, idx) => {
+  const chartData = safeMarketPrices.map((price, idx) => {
     const relative = idx - historyDays + 1;
     return {
       day: relative,
@@ -165,7 +168,10 @@ const StockDetail = ({
   });
 
   const currentPrice = detail?.currentPrice || 0;
-  const prevPrice = marketPrices.length > 0 ? marketPrices[Math.max(marketPrices.length - 2, 0)] : currentPrice;
+  const prevPrice =
+    safeMarketPrices.length > 1
+      ? safeMarketPrices[Math.max(safeMarketPrices.length - 2, 0)]
+      : currentPrice;
   const changeRate = prevPrice ? ((currentPrice - prevPrice) / prevPrice) * 100 : 0;
 
   const myQty = orderMeta?.quantity || 0;
@@ -238,7 +244,7 @@ const StockDetail = ({
     const id = setInterval(() => {
       startInfoAnimation();
       setInfoIndex((prev) => (prev + 1) % infoItems.length);
-    }, 4000);
+    }, 10000);
     return () => clearInterval(id);
   }, [infoItems.length]);
 
