@@ -12,6 +12,8 @@ import {
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -30,6 +32,46 @@ import {
   buyStock,
   sellStock,
 } from "../api/api";
+
+const Candlestick = (props) => {
+  const {
+    x,
+    y,
+    width,
+    height,
+    payload,
+  } = props;
+  const { open, close, high, low } = payload;
+  
+  const isRising = close >= open;
+  const color = isRising ? "#ef4444" : "#3b82f6";
+  
+  // 픽셀 비율: 높이 / 값 차이 (Recharts Bar는 [low, high] 범위로 높이를 계산함)
+  const ratio = height / (high - low);
+  
+  // 몸통 상단(값이 큰 쪽)과 high의 차이만큼 y(top)에서 내려옴
+  const bodyTopValue = Math.max(open, close);
+  const bodyTopOffset = (high - bodyTopValue) * ratio;
+  
+  const bodyHeightValue = Math.abs(open - close);
+  const bodyHeight = bodyHeightValue * ratio;
+
+  return (
+    <g stroke={color} fill={color} strokeWidth="2">
+      {/* 심지 */}
+      <line x1={x + width / 2} y1={y} x2={x + width / 2} y2={y + height} />
+      {/* 몸통 */}
+      <rect
+        x={x}
+        y={y + bodyTopOffset}
+        width={width}
+        height={Math.max(2, bodyHeight)}
+        fill={color}
+        stroke="none"
+      />
+    </g>
+  );
+};
 
 const StockDetail = ({
   stockId,
@@ -162,10 +204,23 @@ const StockDetail = ({
   const historyDays = 10;
   const chartData = safeMarketPrices.map((price, idx) => {
     const relative = idx - historyDays + 1;
+    // 이전 종가를 시가로 가정 (데이터 부족 시)
+    const open = idx > 0 ? safeMarketPrices[idx - 1] : price;
+    const close = price;
+    // 고가/저가 데이터가 없으므로 시각적 효과를 위해 임의의 심지 범위 설정 (실제 서비스라면 서버 데이터 필요)
+    // 캔들 차트 모양을 위해 ±0.5% 정도의 범위를 가상으로 부여
+    const high = Math.max(open, close) * 1.005;
+    const low = Math.min(open, close) * 0.995;
+
     return {
       day: relative,
       label: relative <= 0 ? `D${relative}` : `D+${relative}`,
-      price,
+      open,
+      close,
+      high,
+      low,
+      // Recharts Bar에서 [min, max] 범위를 사용하여 캔들 전체 영역을 잡음
+      range: [low, high], 
     };
   });
 
@@ -320,7 +375,7 @@ const StockDetail = ({
 
               <div className="w-full h-[300px] md:h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <BarChart data={chartData}>
                     <CartesianGrid
                       strokeDasharray="3 3"
                       stroke={theme.chartGrid}
@@ -352,21 +407,25 @@ const StockDetail = ({
                         color: theme.tooltipText,
                       }}
                       itemStyle={{ color: theme.tooltipText }}
-                      labelStyle={{
-                        color: theme.chartText,
-                        marginBottom: "0.5rem",
+                      formatter={(value, name, props) => {
+                        const { open, close, high, low } = props.payload;
+                        return [
+                          <div key="tooltip" className="text-xs">
+                            <div>시가: {open.toLocaleString()}</div>
+                            <div>종가: {close.toLocaleString()}</div>
+                            <div>고가: {high.toFixed(0).toLocaleString()}</div>
+                            <div>저가: {low.toFixed(0).toLocaleString()}</div>
+                          </div>,
+                          "",
+                        ];
                       }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="price"
-                      stroke={changeRate >= 0 ? "#ef4444" : "#3b82f6"}
-                      strokeWidth={3}
-                      dot={chartData.length === 1 ? { r: 4 } : false}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
+                    <Bar
+                      dataKey="range"
+                      shape={<Candlestick openClose="openClose" />}
                       animationDuration={500}
                     />
-                  </LineChart>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
